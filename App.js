@@ -32,7 +32,7 @@ function Localizacao() {
       <View style={[s.gray, { flex: 1, margin: 16, alignItems: 'center', justifyContent: 'center' }]}>
         <Text>(Mapa)</Text>
         <Text style={{ marginTop: 8 }}>Posição do rastreador</Text>
-      </View>
+  </View>
       <Text style={[s.btn, { margin: 16, marginTop: 0, textAlign: 'center', padding: 14 }]}>História de Perdidas</Text>
     </View>
   );
