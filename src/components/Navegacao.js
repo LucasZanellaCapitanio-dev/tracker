@@ -34,9 +34,9 @@ export function Cabecalho({ titulo, fundo = cores.branco, esquerda, direita }) {
 }
 
 const ITENS = [
-  { id: 'localizacao', icone: 'map-marker', rotulo: 'Localização' },
+  { id: 'config', icone: 'cog-outline', rotulo: 'Configurações' },
   { id: 'inicio', icone: 'home', rotulo: 'Início' },
-  { id: 'radar', icone: 'radar', rotulo: 'Equipamentos' },
+  { id: 'como', icone: 'help-circle-outline', rotulo: 'Como usar' },
 ];
 
 export function BarraNav({ ativa, onChange, fundo = cores.branco }) {

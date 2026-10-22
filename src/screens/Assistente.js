@@ -129,7 +129,7 @@ const s = StyleSheet.create({
     paddingRight: 6,
     height: 68,
     borderRadius: raio.pill,
-    backgroundColor: cores.cinzaAzulado,
+    backgroundColor: cores.branco,
   },
   campo: { flex: 1, fontSize: fonte.rotulo, fontWeight: '700', color: cores.texto },
   mic: {

@@ -21,7 +21,7 @@ export default function Botao({ titulo, variante = 'escuro', tamanho = 'normal',
     >
       {children || (
         <Text
-          style={[s.texto, { color: v.texto }, tamanho === 'grande' && s.textoGrande]}
+          style={[s.texto, { color: v.texto }, tamanho === 'grande' && s.textoGrande, tamanho === 'medio' && s.textoMedio]}
           numberOfLines={1}
           adjustsFontSizeToFit
         >
@@ -42,4 +42,5 @@ const s = StyleSheet.create({
   },
   texto: { fontWeight: '800', fontSize: fonte.rotulo },
   textoGrande: { fontSize: fonte.botao },
+  textoMedio: { fontSize: 22 },
 });
