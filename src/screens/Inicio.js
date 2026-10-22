@@ -32,14 +32,16 @@ function Tag({ item, largura, altura, onTocar, onDesconectar, onRemover }) {
       </View>
       <Botao titulo="TOCAR" tamanho="grande" onPress={onTocar} style={s.tocar} rotulo={`Tocar a tag ${nome}`} />
       <View style={s.acoes}>
+        <Botao variante="perigo" onPress={onRemover} style={s.redondo} rotulo={`Remover a tag ${nome}`}>
+          <MaterialCommunityIcons name="trash-can-outline" size={38} color={cores.branco} />
+        </Botao>
         <Botao titulo="DESCONECTAR" tamanho="medio" variante="claro" onPress={onDesconectar} style={[s.acao, s.contorno]} rotulo={`Desconectar a tag ${nome}`} />
-        <Botao titulo="REMOVER" tamanho="medio" variante="perigo" onPress={onRemover} style={s.acao} rotulo={`Remover a tag ${nome}`} />
       </View>
     </View>
   );
 }
 
-export default function Inicio({ onTocar, onDesconectar, onRemover, onAdicionar, onAssistente }) {
+export default function Inicio({ onTocar, onDesconectar, onRemover, onEditar, onAssistente }) {
   // Tamanho real da área da lista: cada página tem exatamente esse tamanho.
   const [medida, setMedida] = useState({ w: 0, h: 0 });
   const [indice, setIndice] = useState(0);
@@ -72,21 +74,24 @@ export default function Inicio({ onTocar, onDesconectar, onRemover, onAdicionar,
           )}
         </View>
 
+        <TouchableOpacity
+          style={s.editar}
+          onPress={onEditar}
+          accessibilityRole="button"
+          accessibilityLabel={`Editar a tag ${(TAGS[indice] || TAGS[0]).nome.toLowerCase()}`}
+        >
+          <View style={s.mais}>
+            <MaterialCommunityIcons name="pencil" size={40} color={cores.branco} />
+          </View>
+          <Text style={s.editarTitulo} numberOfLines={1} adjustsFontSizeToFit>EDITAR</Text>
+        </TouchableOpacity>
+
         <View style={s.paginas}>
           {TAGS.map((t, i) => (
             <View key={t.id} style={[s.bolinha, i === indice && s.bolinhaAtiva]} />
           ))}
           <Text style={s.contagem}>{indice + 1} de {TAGS.length}</Text>
         </View>
-
-        <View style={s.divisor} />
-
-        <TouchableOpacity style={s.adicionar} onPress={onAdicionar} accessibilityRole="button" accessibilityLabel="Adicionar tag">
-          <View style={s.mais}>
-            <MaterialCommunityIcons name="plus" size={44} color={cores.branco} />
-          </View>
-          <Text style={s.adicionarTitulo} numberOfLines={1} adjustsFontSizeToFit>ADICIONAR TAG</Text>
-        </TouchableOpacity>
       </Cartao>
 
       {/* Zona própria do robô: não cobre o cartão e a tela não precisa rolar */}
@@ -130,16 +135,17 @@ const s = StyleSheet.create({
   statusTexto: { fontSize: 16, fontWeight: '800', color: cores.texto },
   // o TOCAR ocupa todo o espaço que sobrar, então a tela sempre fecha certinho
   tocar: { flex: 1, minHeight: 64, marginTop: 10 },
-  acoes: { flexDirection: 'row', gap: 10, marginTop: 10 },
-  acao: { flex: 1, minHeight: 68 },
+  acoes: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 },
+  acao: { flex: 1, minHeight: 72 },
+  redondo: { width: 72, height: 72, minHeight: 72, borderRadius: 36, paddingHorizontal: 0 },
   contorno: { borderWidth: 3, borderColor: cores.escuro },
-  paginas: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 10 },
+  paginas: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 12 },
   bolinha: { width: 12, height: 12, borderRadius: 6, backgroundColor: cores.cinza },
   bolinhaAtiva: { width: 28, backgroundColor: cores.escuro },
   contagem: { marginLeft: 8, fontSize: 16, fontWeight: '800', color: cores.texto },
-  divisor: { height: 2, backgroundColor: cores.texto, marginVertical: 12 },
-  adicionar: {
-    minHeight: 92,
+  editar: {
+    marginTop: 12,
+    minHeight: 84,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -157,7 +163,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  adicionarTitulo: { flexShrink: 1, fontSize: fonte.titulo - 4, fontWeight: '800', color: cores.texto },
+  editarTitulo: { flexShrink: 1, fontSize: fonte.titulo - 4, fontWeight: '800', color: cores.texto },
   zonaRobo: { alignItems: 'center', paddingVertical: 8 },
   robo: {
     width: 136,
