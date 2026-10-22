@@ -7,6 +7,7 @@ import Descricao from './src/screens/Descricao';
 import Assistente from './src/screens/Assistente';
 import AdicionarTag from './src/screens/AdicionarTag';
 import NovaTag from './src/screens/NovaTag';
+import EditarTag from './src/screens/EditarTag';
 import { cores } from './src/theme';
 
 const TITULOS = {
@@ -16,14 +17,16 @@ const TITULOS = {
   assistente: 'Assistente',
   adicionar: 'ADICIONAR TAG',
   novaTag: 'ADICIONAR TAG',
+  editar: 'EDITAR TAG',
 };
 const NA_BARRA = ['config', 'inicio', 'como'];
 // Telas fora da barra ganham uma seta para voltar.
-const VOLTAR = { assistente: 'inicio', adicionar: 'inicio', novaTag: 'adicionar' };
+const VOLTAR = { assistente: 'inicio', adicionar: 'inicio', novaTag: 'adicionar', editar: 'inicio' };
 
 export default function App() {
   const [tela, setTela] = useState('inicio');
   const [aparelho, setAparelho] = useState('aparelho 1');
+  const [editando, setEditando] = useState({ nome: '', icone: 'briefcase-outline' });
   const doAssistente = tela === 'assistente';
 
   const esquerda = VOLTAR[tela]
@@ -31,15 +34,16 @@ export default function App() {
     : undefined;
 
   // Adicionar tag faz parte do fluxo do Início, então o ícone da casa fica marcado.
-  const ativa = NA_BARRA.includes(tela) ? tela : tela === 'adicionar' || tela === 'novaTag' ? 'inicio' : null;
+  const ativa = NA_BARRA.includes(tela) ? tela : tela === 'adicionar' || tela === 'novaTag' || tela === 'editar' ? 'inicio' : null;
 
   let conteudo;
   if (tela === 'config') conteudo = <Configuracoes />;
   else if (tela === 'como') conteudo = <Descricao />;
   else if (tela === 'assistente') conteudo = <Assistente />;
   else if (tela === 'adicionar') conteudo = <AdicionarTag onEscolher={(a) => { setAparelho(a); setTela('novaTag'); }} />;
-  else if (tela === 'novaTag') conteudo = <NovaTag aparelho={aparelho} onCriar={() => setTela('inicio')} />;
-  else conteudo = <Inicio onAdicionar={() => setTela('adicionar')} onAssistente={() => setTela('assistente')} />;
+  else if (tela === 'novaTag') conteudo = <NovaTag aparelho={aparelho} onConfirmar={() => setTela('inicio')} />;
+  else if (tela === 'editar') conteudo = <EditarTag tag={editando} onSalvar={() => setTela('inicio')} />;
+  else conteudo = <Inicio onAdicionar={() => setTela('adicionar')} onEditar={(tag) => { setEditando(tag); setTela('editar'); }} onAssistente={() => setTela('assistente')} />;
 
   return (
     <View style={s.root}>

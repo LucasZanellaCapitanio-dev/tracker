@@ -13,7 +13,7 @@ const TAGS = [
 ];
 
 // Sem equipamentos: mostrar "Nenhum equipamento" e botão "Procurar rastreador".
-function Tag({ item, largura, altura, onTocar, onDesconectar, onRemover }) {
+function Tag({ item, largura, altura, onTocar, onDesconectar }) {
   const nome = item.nome.toLowerCase();
   return (
     <View style={[s.tag, { width: largura, height: altura }]}>
@@ -32,19 +32,17 @@ function Tag({ item, largura, altura, onTocar, onDesconectar, onRemover }) {
       </View>
       <Botao titulo="TOCAR" tamanho="grande" onPress={onTocar} style={s.tocar} rotulo={`Tocar a tag ${nome}`} />
       <View style={s.acoes}>
-        <Botao variante="perigo" onPress={onRemover} style={s.redondo} rotulo={`Remover a tag ${nome}`}>
-          <MaterialCommunityIcons name="trash-can-outline" size={38} color={cores.branco} />
-        </Botao>
         <Botao titulo="DESCONECTAR" tamanho="medio" variante="claro" onPress={onDesconectar} style={[s.acao, s.contorno]} rotulo={`Desconectar a tag ${nome}`} />
       </View>
     </View>
   );
 }
 
-export default function Inicio({ onTocar, onDesconectar, onRemover, onEditar, onAssistente }) {
+export default function Inicio({ onTocar, onDesconectar, onRemover, onEditar, onAdicionar, onAssistente }) {
   // Tamanho real da área da lista: cada página tem exatamente esse tamanho.
   const [medida, setMedida] = useState({ w: 0, h: 0 });
   const [indice, setIndice] = useState(0);
+  const atual = TAGS[indice] || TAGS[0];
 
   return (
     <View style={s.tela}>
@@ -60,7 +58,7 @@ export default function Inicio({ onTocar, onDesconectar, onRemover, onEditar, on
               data={TAGS}
               keyExtractor={(t) => t.id}
               renderItem={({ item }) => (
-                <Tag item={item} largura={medida.w} altura={medida.h} onTocar={onTocar} onDesconectar={onDesconectar} onRemover={onRemover} />
+                <Tag item={item} largura={medida.w} altura={medida.h} onTocar={onTocar} onDesconectar={onDesconectar} />
               )}
               getItemLayout={(_, i) => ({ length: medida.w, offset: medida.w * i, index: i })}
               showsHorizontalScrollIndicator={false}
@@ -74,17 +72,17 @@ export default function Inicio({ onTocar, onDesconectar, onRemover, onEditar, on
           )}
         </View>
 
-        <TouchableOpacity
-          style={s.editar}
-          onPress={onEditar}
-          accessibilityRole="button"
-          accessibilityLabel={`Editar a tag ${(TAGS[indice] || TAGS[0]).nome.toLowerCase()}`}
-        >
-          <View style={s.mais}>
+        <View style={s.icones}>
+          <Botao variante="escuro" onPress={() => onEditar && onEditar(atual)} style={s.circulo} rotulo={`Editar a tag ${atual.nome.toLowerCase()}`}>
             <MaterialCommunityIcons name="pencil" size={40} color={cores.branco} />
-          </View>
-          <Text style={s.editarTitulo} numberOfLines={1} adjustsFontSizeToFit>EDITAR</Text>
-        </TouchableOpacity>
+          </Botao>
+          <Botao variante="perigo" onPress={onRemover} style={s.circulo} rotulo={`Remover a tag ${atual.nome.toLowerCase()}`}>
+            <MaterialCommunityIcons name="trash-can-outline" size={40} color={cores.branco} />
+          </Botao>
+          <Botao variante="azul" onPress={onAdicionar} style={s.circulo} rotulo="Adicionar nova tag">
+            <MaterialCommunityIcons name="plus" size={48} color={cores.texto} />
+          </Botao>
+        </View>
 
         <View style={s.paginas}>
           {TAGS.map((t, i) => (
@@ -137,33 +135,13 @@ const s = StyleSheet.create({
   tocar: { flex: 1, minHeight: 64, marginTop: 10 },
   acoes: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 },
   acao: { flex: 1, minHeight: 72 },
-  redondo: { width: 72, height: 72, minHeight: 72, borderRadius: 36, paddingHorizontal: 0 },
   contorno: { borderWidth: 3, borderColor: cores.escuro },
+  icones: { flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center', marginTop: 12 },
+  circulo: { width: 80, height: 80, minHeight: 80, borderRadius: 40, paddingHorizontal: 0 },
   paginas: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 12 },
   bolinha: { width: 12, height: 12, borderRadius: 6, backgroundColor: cores.cinza },
   bolinhaAtiva: { width: 28, backgroundColor: cores.escuro },
   contagem: { marginLeft: 8, fontSize: 16, fontWeight: '800', color: cores.texto },
-  editar: {
-    marginTop: 12,
-    minHeight: 84,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 14,
-    paddingHorizontal: 14,
-    borderRadius: raio.botao,
-    borderWidth: 4,
-    borderColor: cores.escuro,
-  },
-  mais: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: cores.escuro,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  editarTitulo: { flexShrink: 1, fontSize: fonte.titulo - 4, fontWeight: '800', color: cores.texto },
   zonaRobo: { alignItems: 'center', paddingVertical: 8 },
   robo: {
     width: 136,

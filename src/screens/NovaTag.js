@@ -5,8 +5,8 @@ import Cartao from '../components/Cartao';
 import Botao from '../components/Botao';
 import { cores, raio } from '../theme';
 
-export default function NovaTag({ aparelho = 'aparelho 1', onCriar }) {
-  const [nome, setNome] = useState('');
+export default function NovaTag({ aparelho = 'aparelho 1', nomeInicial = '', icone = 'briefcase-outline', textoBotao = 'CRIAR TAG', onConfirmar }) {
+  const [nome, setNome] = useState(nomeInicial);
 
   return (
     <ScrollView style={s.tela} contentContainerStyle={s.pad} keyboardShouldPersistTaps="handled">
@@ -29,12 +29,12 @@ export default function NovaTag({ aparelho = 'aparelho 1', onCriar }) {
         <View style={s.linhaIcone}>
           <Text style={s.rotulo}>Ícone</Text>
           <TouchableOpacity style={s.icone} accessibilityRole="button" accessibilityLabel="Escolher ícone">
-            <MaterialCommunityIcons name="briefcase-outline" size={56} color={cores.branco} />
+            <MaterialCommunityIcons name={icone} size={56} color={cores.branco} />
           </TouchableOpacity>
         </View>
         <View style={s.divisor} />
 
-        <Botao titulo="CRIAR TAG" variante="azul" tamanho="grande" onPress={onCriar} style={s.criar} />
+        <Botao titulo={textoBotao} variante="azul" tamanho="grande" onPress={onConfirmar} style={s.criar} />
       </Cartao>
     </ScrollView>
   );
