@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, ScrollView, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Cartao from '../components/Cartao';
 import Botao from '../components/Botao';
@@ -13,51 +13,64 @@ const TAGS = [
 ];
 
 // Sem equipamentos: mostrar "Nenhum equipamento" e botão "Procurar rastreador".
-export default function Inicio({ onTocar, onDesconectar, onRemover, onAdicionar }) {
-  const { width } = useWindowDimensions();
-  const largura = width - 40 - 28; // margem da tela (20+20) e padding do cartão (14+14)
-  const [indice, setIndice] = useState(0);
-
-  function Tag({ item }) {
-    return (
-      <View style={{ width: largura }}>
-        <View style={s.linha}>
-          <View style={s.icone}>
-            <MaterialCommunityIcons name={item.icone} size={64} color={cores.branco} />
-          </View>
-          <View style={s.info}>
-            <Text style={s.nome} numberOfLines={2}>{item.nome}</Text>
-            <Text style={s.suave}>Distância · Bateria</Text>
-            <View style={s.status}>
-              <View style={s.ponto} />
-              <Text style={s.statusTexto}>Conectado</Text>
-            </View>
-          </View>
+function Tag({ item, largura, altura, onTocar, onDesconectar, onRemover }) {
+  const nome = item.nome.toLowerCase();
+  return (
+    <View style={[s.tag, { width: largura, height: altura }]}>
+      <View style={s.linha}>
+        <View style={s.icone}>
+          <MaterialCommunityIcons name={item.icone} size={60} color={cores.branco} />
         </View>
-        <Botao titulo="TOCAR" tamanho="grande" onPress={onTocar} style={s.tocar} rotulo={`Tocar a tag ${item.nome.toLowerCase()}`} />
-        <View style={s.acoes}>
-          <Botao titulo="DESCONECTAR" tamanho="medio" variante="claro" onPress={onDesconectar} style={[s.acao, s.contorno]} rotulo={`Desconectar a tag ${item.nome.toLowerCase()}`} />
-          <Botao titulo="REMOVER" tamanho="medio" variante="perigo" onPress={onRemover} style={s.acao} rotulo={`Remover a tag ${item.nome.toLowerCase()}`} />
+        <View style={s.info}>
+          <Text style={s.nome} numberOfLines={2}>{item.nome}</Text>
+          <Text style={s.suave}>Distância · Bateria</Text>
+          <View style={s.status}>
+            <View style={s.ponto} />
+            <Text style={s.statusTexto}>Conectado</Text>
+          </View>
         </View>
       </View>
-    );
-  }
+      <Botao titulo="TOCAR" tamanho="grande" onPress={onTocar} style={s.tocar} rotulo={`Tocar a tag ${nome}`} />
+      <View style={s.acoes}>
+        <Botao titulo="DESCONECTAR" tamanho="medio" variante="claro" onPress={onDesconectar} style={[s.acao, s.contorno]} rotulo={`Desconectar a tag ${nome}`} />
+        <Botao titulo="REMOVER" tamanho="medio" variante="perigo" onPress={onRemover} style={s.acao} rotulo={`Remover a tag ${nome}`} />
+      </View>
+    </View>
+  );
+}
+
+export default function Inicio({ onTocar, onDesconectar, onRemover, onAdicionar, onAssistente }) {
+  // Tamanho real da área da lista: cada página tem exatamente esse tamanho.
+  const [medida, setMedida] = useState({ w: 0, h: 0 });
+  const [indice, setIndice] = useState(0);
 
   return (
-    <ScrollView style={s.tela} contentContainerStyle={s.pad}>
-      {/* Um cartão só: lista de tags (rola para o lado) + adicionar */}
-      <Cartao>
-        <FlatList
-          horizontal
-          data={TAGS}
-          keyExtractor={(t) => t.id}
-          renderItem={({ item }) => <Tag item={item} />}
-          showsHorizontalScrollIndicator={false}
-          pagingEnabled
-          snapToInterval={largura}
-          decelerationRate="fast"
-          onMomentumScrollEnd={(e) => setIndice(Math.round(e.nativeEvent.contentOffset.x / largura))}
-        />
+    <View style={s.tela}>
+      <Cartao style={s.cartao}>
+        <View
+          style={s.listaBox}
+          onLayout={(e) => setMedida({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
+        >
+          {medida.w > 0 && (
+            <FlatList
+              style={{ width: medida.w, height: medida.h }}
+              horizontal
+              data={TAGS}
+              keyExtractor={(t) => t.id}
+              renderItem={({ item }) => (
+                <Tag item={item} largura={medida.w} altura={medida.h} onTocar={onTocar} onDesconectar={onDesconectar} onRemover={onRemover} />
+              )}
+              getItemLayout={(_, i) => ({ length: medida.w, offset: medida.w * i, index: i })}
+              showsHorizontalScrollIndicator={false}
+              pagingEnabled
+              snapToInterval={medida.w}
+              snapToAlignment="start"
+              decelerationRate="fast"
+              disableIntervalMomentum
+              onMomentumScrollEnd={(e) => setIndice(Math.round(e.nativeEvent.contentOffset.x / medida.w))}
+            />
+          )}
+        </View>
 
         <View style={s.paginas}>
           {TAGS.map((t, i) => (
@@ -68,39 +81,39 @@ export default function Inicio({ onTocar, onDesconectar, onRemover, onAdicionar 
 
         <View style={s.divisor} />
 
-        <TouchableOpacity
-          style={s.adicionar}
-          onPress={onAdicionar}
-          accessibilityRole="button"
-          accessibilityLabel="Adicionar tag. Procurar novo rastreador"
-        >
+        <TouchableOpacity style={s.adicionar} onPress={onAdicionar} accessibilityRole="button" accessibilityLabel="Adicionar tag">
           <View style={s.mais}>
-            <MaterialCommunityIcons name="plus" size={48} color={cores.branco} />
+            <MaterialCommunityIcons name="plus" size={44} color={cores.branco} />
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={s.adicionarTitulo}>ADICIONAR TAG</Text>
-            <Text style={s.suave}>Procurar novo rastreador</Text>
-          </View>
+          <Text style={s.adicionarTitulo} numberOfLines={1} adjustsFontSizeToFit>ADICIONAR TAG</Text>
         </TouchableOpacity>
       </Cartao>
-    </ScrollView>
+
+      {/* Zona própria do robô: não cobre o cartão e a tela não precisa rolar */}
+      <View style={s.zonaRobo}>
+        <TouchableOpacity style={s.robo} onPress={onAssistente} accessibilityRole="button" accessibilityLabel="Abrir o assistente por voz">
+          <MaterialCommunityIcons name="robot-happy-outline" size={92} color={cores.branco} />
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 
 const s = StyleSheet.create({
-  tela: { flex: 1, backgroundColor: cores.amarelo },
-  // espaço no fim para o botão do robô não cobrir o conteúdo
-  pad: { padding: 20, paddingBottom: 200 },
+  tela: { flex: 1, backgroundColor: cores.amarelo, paddingHorizontal: 20, paddingTop: 20 },
+  cartao: { flex: 1 },
+  listaBox: { flex: 1, minHeight: 0 },
+  tag: { paddingHorizontal: 2 },
   linha: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   icone: {
-    width: 108,
-    height: 108,
+    width: 100,
+    height: 100,
     borderRadius: raio.cartao,
     backgroundColor: cores.cinza,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  info: { flex: 1, gap: 6 },
+  info: { flex: 1, gap: 4 },
   nome: { fontSize: fonte.titulo - 4, fontWeight: '800', color: cores.texto },
   suave: { fontSize: fonte.rotulo, fontWeight: '700', color: cores.escuro },
   status: {
@@ -110,38 +123,53 @@ const s = StyleSheet.create({
     gap: 8,
     backgroundColor: cores.amarelo,
     borderRadius: raio.pill,
-    paddingVertical: 6,
+    paddingVertical: 4,
     paddingHorizontal: 14,
   },
   ponto: { width: 12, height: 12, borderRadius: 6, backgroundColor: cores.escuro },
   statusTexto: { fontSize: 16, fontWeight: '800', color: cores.texto },
-  tocar: { minHeight: 108, marginTop: 14 },
+  // o TOCAR ocupa todo o espaço que sobrar, então a tela sempre fecha certinho
+  tocar: { flex: 1, minHeight: 64, marginTop: 10 },
   acoes: { flexDirection: 'row', gap: 10, marginTop: 10 },
-  acao: { flex: 1, minHeight: 72 },
+  acao: { flex: 1, minHeight: 68 },
   contorno: { borderWidth: 3, borderColor: cores.escuro },
-  paginas: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 16 },
+  paginas: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 10 },
   bolinha: { width: 12, height: 12, borderRadius: 6, backgroundColor: cores.cinza },
   bolinhaAtiva: { width: 28, backgroundColor: cores.escuro },
   contagem: { marginLeft: 8, fontSize: 16, fontWeight: '800', color: cores.texto },
-  divisor: { height: 2, backgroundColor: cores.texto, marginVertical: 16 },
+  divisor: { height: 2, backgroundColor: cores.texto, marginVertical: 12 },
   adicionar: {
-    minHeight: 112,
+    minHeight: 92,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 14,
-    padding: 14,
-    borderRadius: raio.cartao,
+    paddingHorizontal: 14,
+    borderRadius: raio.botao,
     borderWidth: 4,
-    borderStyle: 'dashed',
     borderColor: cores.escuro,
   },
   mais: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: cores.escuro,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  adicionarTitulo: { fontSize: fonte.titulo - 4, fontWeight: '800', color: cores.texto },
+  adicionarTitulo: { flexShrink: 1, fontSize: fonte.titulo - 4, fontWeight: '800', color: cores.texto },
+  zonaRobo: { alignItems: 'center', paddingVertical: 8 },
+  robo: {
+    width: 136,
+    height: 136,
+    borderRadius: 68,
+    backgroundColor: cores.vermelho,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 },
+  },
 });
