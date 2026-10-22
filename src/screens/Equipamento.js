@@ -1,17 +1,18 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Cartao from '../components/Cartao';
 import Botao from '../components/Botao';
-import { cores, raio } from '../theme';
+import { cores, raio, fonte } from '../theme';
 
+// Sem equipamentos: mostrar "Nenhum equipamento" e botão "Procurar rastreador".
 export default function Equipamento() {
   return (
-    <ScrollView contentContainerStyle={s.pad}>
+    <ScrollView style={s.tela} contentContainerStyle={s.pad}>
       <Cartao>
         <View style={s.linha}>
           <View style={s.icone}>
-            <Ionicons name="bluetooth" size={24} color={cores.destaque} />
+            <MaterialCommunityIcons name="bluetooth" size={40} color={cores.branco} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={s.nome}>Nome do equipamento</Text>
@@ -22,46 +23,42 @@ export default function Equipamento() {
             <Text style={s.statusTexto}>Conectado</Text>
           </View>
         </View>
-
         <View style={s.acoes}>
-          <Botao titulo="Tocar" variante="primario" style={s.acao} />
-          <Botao titulo="Desconectar" style={s.acao} />
+          <Botao titulo="Tocar" style={s.acao} />
+          <Botao titulo="Desconectar" variante="claro" style={[s.acao, s.contorno]} />
           <Botao titulo="Remover" variante="perigo" style={s.acao} />
         </View>
       </Cartao>
-
-      <Text style={s.nota}>
-        Sem equipamentos: mostrar "Nenhum equipamento" e botão "Procurar rastreador".
-      </Text>
     </ScrollView>
   );
 }
 
 const s = StyleSheet.create({
-  pad: { padding: 16 },
+  tela: { flex: 1, backgroundColor: cores.amarelo },
+  pad: { padding: 20 },
   linha: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   icone: {
-    width: 48,
-    height: 48,
+    width: 72,
+    height: 72,
     borderRadius: raio.cartao,
-    backgroundColor: cores.destaqueSuave,
+    backgroundColor: cores.cinza,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  nome: { fontSize: 16, fontWeight: '700', color: cores.texto },
-  suave: { marginTop: 2, fontSize: 13, color: cores.textoSuave },
+  nome: { fontSize: fonte.rotulo + 2, fontWeight: '800', color: cores.texto },
+  suave: { marginTop: 2, fontSize: 14, fontWeight: '600', color: cores.escuro },
   status: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: cores.sucessoSuave,
+    backgroundColor: cores.amarelo,
     borderRadius: raio.pill,
-    paddingVertical: 4,
+    paddingVertical: 6,
     paddingHorizontal: 10,
   },
-  ponto: { width: 7, height: 7, borderRadius: 4, backgroundColor: cores.sucesso },
-  statusTexto: { fontSize: 12, fontWeight: '600', color: cores.sucesso },
-  acoes: { flexDirection: 'row', gap: 8, marginTop: 14 },
+  ponto: { width: 9, height: 9, borderRadius: 5, backgroundColor: cores.escuro },
+  statusTexto: { fontSize: 13, fontWeight: '800', color: cores.texto },
+  acoes: { flexDirection: 'row', gap: 8, marginTop: 16 },
   acao: { flex: 1 },
-  nota: { color: cores.textoSuave, fontStyle: 'italic', fontSize: 13, marginTop: 14 },
+  contorno: { borderWidth: 2, borderColor: cores.escuro },
 });

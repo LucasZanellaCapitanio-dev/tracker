@@ -8,9 +8,7 @@ export default function Cartao({ children, style }) {
 
 const s = StyleSheet.create({
   cartao: {
-    backgroundColor: cores.superficie,
-    borderWidth: 1,
-    borderColor: cores.borda,
+    backgroundColor: cores.branco,
     borderRadius: raio.cartao,
     padding: 14,
   },

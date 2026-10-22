@@ -1,67 +1,60 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Switch, StyleSheet } from 'react-native';
 import Cartao from '../components/Cartao';
-import { cores } from '../theme';
+import { cores, fonte } from '../theme';
 
-function Linha({ rotulo, ultima, children }) {
+function Linha({ rotulo, ultima, valor, onChange }) {
   return (
     <View style={[s.linha, !ultima && s.divisor]}>
       <Text style={s.rotulo}>{rotulo}</Text>
-      {children}
+      <Switch
+        value={valor}
+        onValueChange={onChange}
+        accessibilityLabel={rotulo}
+        trackColor={{ false: cores.cinza, true: cores.escuro }}
+        ios_backgroundColor={cores.cinza}
+        thumbColor={cores.amarelo}
+        style={s.interruptor}
+      />
     </View>
   );
 }
 
-function Interruptor({ value, onValueChange }) {
-  return (
-    <Switch
-      value={value}
-      onValueChange={onValueChange}
-      trackColor={{ false: '#D1D5DB', true: cores.destaque }}
-      thumbColor="#fff"
-    />
-  );
-}
-
 export default function Configuracoes() {
-  const [wifi, setWifi] = useState(false);
-  const [silencio, setSilencio] = useState(true);
+  const [leitura, setLeitura] = useState(true);
+  const [resposta, setResposta] = useState(false);
+  const [vibracao, setVibracao] = useState(false);
+  const [som, setSom] = useState(true);
 
   return (
-    <ScrollView contentContainerStyle={s.pad}>
-      <Text style={s.secao}>Modo não incomodar</Text>
+    <ScrollView style={s.tela} contentContainerStyle={s.pad}>
+      <Text style={s.secao} accessibilityRole="header">CONFIGURAÇÕES</Text>
       <Cartao style={s.grupo}>
-        <Linha rotulo="Modo Não Incomodar Wi-Fi">
-          <Interruptor value={wifi} onValueChange={setWifi} />
-        </Linha>
-        <Linha rotulo="Período de silêncio (23:00–07:00)" ultima>
-          <Interruptor value={silencio} onValueChange={setSilencio} />
-        </Linha>
+        <Linha rotulo="LEITURA POR VOZ" valor={leitura} onChange={setLeitura} />
+        <Linha rotulo="RESPOSTA POR ÁUDIO" valor={resposta} onChange={setResposta} />
+        <Linha rotulo="VIBRAÇÃO DO RASTREADOR" valor={vibracao} onChange={setVibracao} />
+        <Linha rotulo="SOM DO RASTREADOR" valor={som} onChange={setSom} ultima />
       </Cartao>
-
-      <Text style={[s.secao, { marginTop: 24 }]}>Sobre o software</Text>
-      <Cartao style={s.grupo}>
-        <Linha rotulo="Versão" ultima>
-          <Text style={s.valor}>v2.0.7</Text>
-        </Linha>
-      </Cartao>
+      <Text style={s.versao}>Versão v2.0.7</Text>
     </ScrollView>
   );
 }
 
 const s = StyleSheet.create({
-  pad: { padding: 16 },
-  secao: { fontSize: 14, fontWeight: '700', color: cores.textoSuave, marginBottom: 8, marginLeft: 4 },
+  tela: { flex: 1, backgroundColor: cores.amarelo },
+  pad: { padding: 20 },
+  secao: { fontSize: fonte.secao, fontWeight: '800', color: cores.texto, marginBottom: 10 },
   grupo: { padding: 0, overflow: 'hidden' },
   linha: {
+    minHeight: 84,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
   },
-  divisor: { borderBottomWidth: 1, borderBottomColor: cores.borda },
-  rotulo: { flex: 1, fontSize: 15, color: cores.texto },
-  valor: { fontSize: 15, color: cores.textoSuave },
+  divisor: { borderBottomWidth: 2, borderBottomColor: cores.texto },
+  rotulo: { flex: 1, fontSize: fonte.rotulo, fontWeight: '800', color: cores.texto },
+  interruptor: { transform: [{ scaleX: 1.3 }, { scaleY: 1.3 }] },
+  versao: { marginTop: 16, textAlign: 'center', fontSize: 14, fontWeight: '700', color: cores.escuro },
 });

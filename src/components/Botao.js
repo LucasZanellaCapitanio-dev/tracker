@@ -1,34 +1,45 @@
 import React from 'react';
 import { Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { cores, raio } from '../theme';
+import { cores, raio, fonte } from '../theme';
 
 const VARIANTES = {
-  primario: { fundo: cores.destaque, texto: '#fff', borda: cores.destaque },
-  neutro: { fundo: cores.superficie, texto: cores.texto, borda: cores.borda },
-  perigo: { fundo: cores.perigoSuave, texto: cores.perigo, borda: cores.perigoSuave },
+  escuro: { fundo: cores.escuro, texto: cores.branco },
+  claro: { fundo: cores.amarelo, texto: cores.texto },
+  perigo: { fundo: cores.vermelho, texto: cores.branco },
 };
 
-export default function Botao({ titulo, variante = 'neutro', onPress, style }) {
+// Área de toque grande (mín. 56) para facilitar o uso com leitor de tela.
+export default function Botao({ titulo, variante = 'escuro', tamanho = 'normal', onPress, style, children, rotulo }) {
   const v = VARIANTES[variante];
   return (
     <TouchableOpacity
       activeOpacity={0.7}
       onPress={onPress}
-      style={[s.botao, { backgroundColor: v.fundo, borderColor: v.borda }, style]}
+      accessibilityRole="button"
+      accessibilityLabel={rotulo || titulo}
+      style={[s.botao, { backgroundColor: v.fundo }, style]}
     >
-      <Text style={[s.texto, { color: v.texto }]} numberOfLines={1}>{titulo}</Text>
+      {children || (
+        <Text
+          style={[s.texto, { color: v.texto }, tamanho === 'grande' && s.textoGrande]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+        >
+          {titulo}
+        </Text>
+      )}
     </TouchableOpacity>
   );
 }
 
 const s = StyleSheet.create({
   botao: {
-    borderWidth: 1,
+    minHeight: 56,
     borderRadius: raio.botao,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  texto: { fontWeight: '600', fontSize: 13 },
+  texto: { fontWeight: '800', fontSize: fonte.rotulo },
+  textoGrande: { fontSize: fonte.botao },
 });

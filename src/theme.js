@@ -1,15 +1,15 @@
+// Paleta do protótipo do Canva: amarelo, preto, azul e o vermelho do robô.
+// Alto contraste de propósito: o app é pensado para pessoas cegas e de baixa visão.
 export const cores = {
-  fundo: '#F4F5F7',
-  superficie: '#FFFFFF',
-  texto: '#161A22',
-  textoSuave: '#6B7280',
-  borda: '#E3E6EB',
-  destaque: '#0F766E',
-  destaqueSuave: '#DDF1EE',
-  sucesso: '#15803D',
-  sucessoSuave: '#DCF3E4',
-  perigo: '#B91C1C',
-  perigoSuave: '#FBE4E4',
+  amarelo: '#FFE36E',
+  escuro: '#262626',
+  branco: '#FFFFFF',
+  cinza: '#A6A6A6',
+  cinzaAzulado: '#C8D0DA',
+  azul: '#4DA8FF',
+  vermelho: '#FF3333',
+  texto: '#000000',
 };
 
-export const raio = { botao: 10, cartao: 14, pill: 999 };
+export const raio = { cartao: 28, botao: 22, pill: 999 };
+export const fonte = { titulo: 32, secao: 20, rotulo: 18, botao: 30 };
