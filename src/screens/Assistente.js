@@ -79,13 +79,14 @@ export default function Assistente() {
             accessibilityLabel="Escreva sua dúvida"
             onSubmitEditing={enviar}
           />
-          <TouchableOpacity
-            style={s.mic}
-            onPress={texto.trim() ? enviar : falar}
-            accessibilityRole="button"
-            accessibilityLabel={texto.trim() ? 'Enviar' : 'Falar com o assistente'}
-          >
-            <MaterialCommunityIcons name={texto.trim() ? 'send' : 'microphone'} size={32} color={cores.branco} />
+          {texto.trim() ? (
+            <TouchableOpacity style={s.enviar} onPress={enviar} accessibilityRole="button" accessibilityLabel="Enviar mensagem">
+              <MaterialCommunityIcons name="send" size={30} color={cores.texto} />
+            </TouchableOpacity>
+          ) : null}
+          {/* Microfone sempre fixo no canto direito da barra */}
+          <TouchableOpacity style={s.mic} onPress={falar} accessibilityRole="button" accessibilityLabel="Falar com o assistente">
+            <MaterialCommunityIcons name="microphone" size={32} color={cores.branco} />
           </TouchableOpacity>
         </View>
       </View>
@@ -131,7 +132,15 @@ const s = StyleSheet.create({
     borderRadius: raio.pill,
     backgroundColor: cores.branco,
   },
-  campo: { flex: 1, fontSize: fonte.rotulo, fontWeight: '700', color: cores.texto },
+  campo: { flex: 1, minWidth: 0, fontSize: fonte.rotulo, fontWeight: '700', color: cores.texto },
+  enviar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: cores.amarelo,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   mic: {
     width: 56,
     height: 56,

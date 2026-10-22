@@ -5,6 +5,7 @@ import { cores, raio, fonte } from '../theme';
 const VARIANTES = {
   escuro: { fundo: cores.escuro, texto: cores.branco },
   claro: { fundo: cores.amarelo, texto: cores.texto },
+  azul: { fundo: cores.azul, texto: cores.texto },
   perigo: { fundo: cores.vermelho, texto: cores.branco },
 };
 
