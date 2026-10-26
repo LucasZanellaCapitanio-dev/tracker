@@ -96,3 +96,42 @@ npm start
 
 > 💡 O plugin `react-native-ble-plx` exige um *development build*, pois não funciona no Expo Go. Como o wireframe ainda não usa Bluetooth de verdade, a navegação funciona normalmente no Expo Go.
 
+## 🧭 Fluxo de navegação
+
+A navegação é controlada por **estado** no `App.js`, sem biblioteca de rotas.
+
+- A **barra inferior** dá acesso a: Configurações, Início e Como usar.
+- As demais telas (Assistente, Adicionar tag, Nova tag e Editar tag) exibem uma **seta de voltar** no cabeçalho.
+- O fluxo de adicionar tag segue o caminho: `Início → Adicionar tag → Nova tag → Início`.
+- Nas telas de adicionar e editar, o ícone da casa permanece destacado, pois fazem parte do fluxo do Início.
+
+## ♿ Acessibilidade
+
+- Botões grandes e com área de toque ampliada.
+- Textos grandes e em negrito.
+- Cores de alto contraste (amarelo, preto, vermelho e azul).
+- Rótulos de acessibilidade (`accessibilityLabel`) nos botões, por exemplo "Tocar a tag chaves".
+- Assistente por voz de fácil acesso.
+
+## ⚠️ Limitações atuais
+
+- As tags (`MALA VIAGEM`, `CHAVES`, `MOCHILA`) são **dados de exemplo** fixos no código.
+- Distância, bateria e status de conexão ainda são textos ilustrativos.
+- Ações de tocar, remover e salvar ainda não têm efeito real.
+- O Bluetooth está apenas configurado, sem implementação de varredura ou conexão.
+
+## 🔮 Próximos passos
+
+- [ ] Integrar o Bluetooth (`react-native-ble-plx`) para buscar e conectar às tags.
+- [ ] Exibir distância e bateria reais.
+- [ ] Implementar o som do botão **TOCAR**.
+- [ ] Persistir as tags cadastradas (armazenamento local).
+- [ ] Implementar o reconhecimento de voz do assistente.
+- [ ] Tratar o estado sem tags ("Nenhum equipamento" e botão "Procurar rastreador").
+
+## 👤 Autoria
+
+Projeto desenvolvido como atividade acadêmica.
+
+- **Autor(a):** _seu nome aqui_
+- **Disciplina/Curso:** _preencha aqui_
