@@ -29,3 +29,36 @@ O app foi pensado com **foco em acessibilidade**: botões grandes, textos em tam
 | Adicionar tag | ADICIONAR TAG | Escolha do aparelho |
 | Nova tag | ADICIONAR TAG | Confirmação e configuração da nova tag |
 | Editar tag | EDITAR TAG | Edição de nome e ícone |
+
+## 🛠️ Tecnologias
+
+- [React Native](https://reactnative.dev/) `0.86.3`
+- [React](https://react.dev/) `19.2.3`
+- [Expo](https://expo.dev/) `57.0.30`
+- [@expo/vector-icons](https://docs.expo.dev/guides/icons/) (MaterialCommunityIcons)
+- [react-native-ble-plx](https://github.com/dotintent/react-native-ble-plx) (plugin Bluetooth configurado no `app.json`, para uso futuro)
+
+## 📂 Estrutura do projeto
+
+```
+.
+├── App.js                  # Componente raiz: controla a navegação entre telas
+├── Inicio.js               # Tela inicial com o carrossel de tags
+├── app.json                # Configurações do Expo e permissões de Bluetooth
+├── package.json            # Dependências e scripts
+└── src/
+    ├── components/
+    │   ├── Navegacao.js    # Cabecalho e BarraNav (barra inferior)
+    │   ├── Cartao.js       # Cartão base reutilizável
+    │   └── Botao.js        # Botão reutilizável com variantes
+    ├── screens/
+    │   ├── Configuracoes.js
+    │   ├── Descricao.js
+    │   ├── Assistente.js
+    │   ├── AdicionarTag.js
+    │   ├── NovaTag.js
+    │   ├── EditarTag.js
+    │   └── ConfirmarRemocao.js
+    └── theme.js            # Cores, raios de borda e fontes
+```
+
