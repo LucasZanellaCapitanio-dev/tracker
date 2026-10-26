@@ -62,3 +62,37 @@ O app foi pensado com **foco em acessibilidade**: botões grandes, textos em tam
     └── theme.js            # Cores, raios de borda e fontes
 ```
 
+## 🚀 Como executar
+
+### Pré-requisitos
+
+- [Node.js](https://nodejs.org/) e npm instalados
+- Aplicativo **Expo Go** no celular **ou** um emulador Android/iOS
+
+### Passo a passo
+
+1. Clone o repositório:
+
+```bash
+git clone <url-do-repositorio>
+cd rastreador-wireframe
+```
+
+2. Instale as dependências:
+
+```bash
+npm install
+```
+
+3. Inicie o projeto:
+
+```bash
+npm start
+```
+
+4. Abra o app:
+   - **No celular:** escaneie o QR Code exibido no terminal com o Expo Go.
+   - **No emulador:** pressione `a` (Android) ou `i` (iOS) no terminal.
+
+> 💡 O plugin `react-native-ble-plx` exige um *development build*, pois não funciona no Expo Go. Como o wireframe ainda não usa Bluetooth de verdade, a navegação funciona normalmente no Expo Go.
+
