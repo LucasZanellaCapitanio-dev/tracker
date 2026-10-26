@@ -31,7 +31,7 @@ export default function AdicionarTag({ onEscolher }) {
     corpo = (
       <>
         {demo ? (
-          <Text style={s.demo} accessibilityLabel="Modo demonstração. Dispositivos de exemplo.">
+          <Text style={s.demo} accessibilityLabel="Identificando aparelhos bluetooth.">
             MODO DEMONSTRAÇÃO · dispositivos de exemplo
           </Text>
         ) : null}
