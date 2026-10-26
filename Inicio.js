@@ -166,4 +166,3 @@ const s = StyleSheet.create({
     shadowOffset: { width: 0, height: 5 },
   },
 });
-//teste

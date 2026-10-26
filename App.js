@@ -40,7 +40,7 @@ export default function App() {
   if (tela === 'config') conteudo = <Configuracoes />;
   else if (tela === 'como') conteudo = <Descricao />;
   else if (tela === 'assistente') conteudo = <Assistente />;
-  else if (tela === 'adicionar') conteudo = <AdicionarTag onEscolher={(a) => { setAparelho(a); setTela('novaTag'); }} />;
+  else if (tela === 'adicionar') conteudo = <AdicionarTag onEscolher={(d) => { setAparelho(d.nome); setTela('novaTag'); }} />;
   else if (tela === 'novaTag') conteudo = <NovaTag aparelho={aparelho} onConfirmar={() => setTela('inicio')} />;
   else if (tela === 'editar') conteudo = <EditarTag tag={editando} onSalvar={() => setTela('inicio')} />;
   else conteudo = <Inicio onAdicionar={() => setTela('adicionar')} onEditar={(tag) => { setEditando(tag); setTela('editar'); }} onAssistente={() => setTela('assistente')} />;

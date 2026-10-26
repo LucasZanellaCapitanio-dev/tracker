@@ -1,27 +1,67 @@
 import React from 'react';
-import { Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import Cartao from '../components/Cartao';
+import Botao from '../components/Botao';
 import { cores } from '../theme';
+import { useDispositivosBluetooth } from '../bluetooth';
 
-// Lista de aparelhos encontrados (exemplo).
-const APARELHOS = ['aparelho 1', 'aparelho 2', 'aparelho 3', 'aparelho 4'];
+// Aviso com ação opcional (Bluetooth desligado, sem permissão, etc.).
+function Aviso({ texto, botao, onPress }) {
+  return (
+    <View style={s.aviso}>
+      <Text style={s.textoAviso} accessibilityLiveRegion="polite">{texto}</Text>
+      {botao ? <Botao titulo={botao} variante="azul" tamanho="medio" onPress={onPress} style={s.botaoAviso} /> : null}
+    </View>
+  );
+}
 
 export default function AdicionarTag({ onEscolher }) {
-  return (
-    <ScrollView style={s.tela} contentContainerStyle={s.pad}>
-      <Cartao style={s.cartao}>
-        {APARELHOS.map((a) => (
+  const { estado, procurando, dispositivos, procurar, reverificar, ligar } = useDispositivosBluetooth();
+
+  let corpo;
+  if (estado === 'verificando') {
+    corpo = <Aviso texto="Verificando o Bluetooth…" />;
+  } else if (estado === 'desligado') {
+    corpo = <Aviso texto="O Bluetooth está desligado. Ligue para procurar dispositivos." botao="LIGAR BLUETOOTH" onPress={ligar} />;
+  } else if (estado === 'sem_permissao') {
+    corpo = <Aviso texto="Permita o acesso ao Bluetooth para procurar dispositivos." botao="PERMITIR" onPress={reverificar} />;
+  } else if (estado === 'indisponivel') {
+    corpo = <Aviso texto="Bluetooth indisponível neste aparelho. Use um build de desenvolvimento, não o Expo Go." />;
+  } else {
+    corpo = (
+      <>
+        {dispositivos.map((d) => (
           <TouchableOpacity
-            key={a}
+            key={d.id}
             style={s.linha}
-            onPress={() => onEscolher && onEscolher(a)}
+            onPress={() => onEscolher && onEscolher(d)}
             accessibilityRole="button"
-            accessibilityLabel={`Escolher ${a}`}
+            accessibilityLabel={`Escolher ${d.nome}`}
           >
-            <Text style={s.texto}>{a}</Text>
+            <Text style={s.texto} numberOfLines={2}>{d.nome}</Text>
           </TouchableOpacity>
         ))}
-      </Cartao>
+
+        {procurando ? (
+          <View style={s.status} accessible accessibilityLiveRegion="polite" accessibilityLabel="Procurando dispositivos">
+            <ActivityIndicator size="large" color={cores.texto} />
+            <Text style={s.textoStatus}>Procurando…</Text>
+          </View>
+        ) : (
+          <View style={s.status}>
+            {dispositivos.length === 0 ? (
+              <Text style={s.textoStatus} accessibilityLiveRegion="polite">Nenhum dispositivo encontrado.</Text>
+            ) : null}
+            <Botao titulo="PROCURAR NOVAMENTE" variante="azul" tamanho="medio" onPress={procurar} style={s.botaoAviso} />
+          </View>
+        )}
+      </>
+    );
+  }
+
+  return (
+    <ScrollView style={s.tela} contentContainerStyle={s.pad}>
+      <Cartao style={s.cartao}>{corpo}</Cartao>
     </ScrollView>
   );
 }
@@ -34,8 +74,14 @@ const s = StyleSheet.create({
     minHeight: 92,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 12,
     borderBottomWidth: 2,
     borderBottomColor: cores.texto,
   },
-  texto: { fontSize: 26, fontWeight: '800', color: cores.texto },
+  texto: { fontSize: 26, fontWeight: '800', color: cores.texto, textAlign: 'center' },
+  aviso: { flex: 1, minHeight: 420, alignItems: 'center', justifyContent: 'center', padding: 16, gap: 20 },
+  textoAviso: { fontSize: 24, fontWeight: '800', color: cores.texto, textAlign: 'center' },
+  botaoAviso: { alignSelf: 'stretch', minHeight: 72 },
+  status: { alignItems: 'center', justifyContent: 'center', padding: 20, gap: 14 },
+  textoStatus: { fontSize: 22, fontWeight: '700', color: cores.escuro, textAlign: 'center' },
 });
