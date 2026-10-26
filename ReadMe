@@ -1,0 +1,31 @@
+# 📍 TRACKER – Rastreador Wireframe
+
+Protótipo (wireframe) de um aplicativo mobile para **localizar objetos pessoais** (mala, chaves, mochila etc.) por meio de **tags rastreadoras Bluetooth**.
+
+O app foi pensado com **foco em acessibilidade**: botões grandes, textos em tamanho elevado, cores de alto contraste e um **assistente por voz** acessível direto da tela inicial.
+
+> ⚠️ Este projeto é um **wireframe navegável**. As tags exibidas são dados de exemplo e ainda não há comunicação real com dispositivos Bluetooth.
+
+## ✨ Funcionalidades
+
+- **Tela inicial (Tracker):** carrossel horizontal com as tags cadastradas, mostrando nome, ícone, distância, bateria e status de conexão.
+- **Botão TOCAR:** destinado a fazer a tag emitir som para ser encontrada.
+- **Adicionar tag:** fluxo em duas etapas (escolher o aparelho e, em seguida, configurar a nova tag).
+- **Editar tag:** alteração do nome e do ícone de uma tag já cadastrada.
+- **Remover tag:** com tela de confirmação para evitar exclusões acidentais.
+- **Assistente por voz:** botão de destaque (robô) na tela inicial.
+- **Como usar:** tela com a descrição e instruções de uso do aplicativo.
+- **Configurações:** tela de ajustes do aplicativo.
+- **Indicador de páginas:** bolinhas e contador ("1 de 3") para indicar qual tag está sendo exibida.
+
+## 📱 Telas
+
+| Tela | Título no app | Descrição |
+|------|---------------|-----------|
+| Início | TRACKER | Lista de tags, ações de editar, remover e adicionar |
+| Como usar | COMO USAR | Instruções de uso |
+| Configurações | CONFIGURAÇÕES | Ajustes do app |
+| Assistente | ASSISTENTE | Interação por voz |
+| Adicionar tag | ADICIONAR TAG | Escolha do aparelho |
+| Nova tag | ADICIONAR TAG | Confirmação e configuração da nova tag |
+| Editar tag | EDITAR TAG | Edição de nome e ícone |
