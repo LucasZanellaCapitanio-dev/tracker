@@ -1,15 +1,27 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Linking, PermissionsAndroid, Platform } from 'react-native';
-import { BleManager } from 'react-native-ble-plx';
 
 // Quanto tempo cada busca dura antes de parar sozinha (economiza bateria).
 const DURACAO_BUSCA_MS = 15000;
+
+// Modo demonstração: usado quando o módulo nativo não existe (Expo Snack / Expo Go).
+// Simula a busca com estes dispositivos de exemplo.
+const DISPOSITIVOS_DEMO = [
+  { id: 'demo-1', nome: 'Tag Chaves' },
+  { id: 'demo-2', nome: 'Tag Mochila' },
+  { id: 'demo-3', nome: 'Fone Bluetooth' },
+  { id: 'demo-4', nome: 'Caixa de Som' },
+];
 
 // Estados que a tela precisa tratar.
 //  verificando | ligado | desligado | sem_permissao | indisponivel
 let gerenciador = null;
 function obterGerenciador() {
-  if (!gerenciador) gerenciador = new BleManager();
+  if (!gerenciador) {
+    // require sob demanda: sem o módulo nativo (Expo Go/Snack) o app não quebra, só avisa.
+    const { BleManager } = require('react-native-ble-plx');
+    gerenciador = new BleManager();
+  }
   return gerenciador;
 }
 
@@ -34,17 +46,32 @@ export function useDispositivosBluetooth() {
   const [estado, setEstado] = useState('verificando');
   const [procurando, setProcurando] = useState(false);
   const [dispositivos, setDispositivos] = useState([]);
+  const [demo, setDemo] = useState(false);
+  const demoRef = useRef(false);
+  const timersDemo = useRef([]);
   const ble = useRef(null);
   const mapa = useRef(new Map());
   const timer = useRef(null);
 
   const parar = useCallback(() => {
     clearTimeout(timer.current);
+    timersDemo.current.forEach(clearTimeout);
+    timersDemo.current = [];
     try { ble.current && ble.current.stopDeviceScan(); } catch (e) {}
     setProcurando(false);
   }, []);
 
   const procurar = useCallback(async () => {
+    if (demoRef.current) {
+      parar();
+      setDispositivos([]);
+      setProcurando(true);
+      DISPOSITIVOS_DEMO.forEach((d, i) => {
+        timersDemo.current.push(setTimeout(() => setDispositivos((l) => [...l, d]), 800 * (i + 1)));
+      });
+      timersDemo.current.push(setTimeout(parar, 800 * (DISPOSITIVOS_DEMO.length + 1)));
+      return;
+    }
     const m = ble.current;
     if (!m) return;
     if (!(await pedirPermissoes())) { setEstado('sem_permissao'); return; }
@@ -72,7 +99,12 @@ export function useDispositivosBluetooth() {
       try {
         ble.current = obterGerenciador();
       } catch (e) {
-        if (ativo) setEstado('indisponivel');
+        // Sem módulo nativo: entra no modo demonstração em vez de quebrar.
+        if (ativo) {
+          demoRef.current = true;
+          setDemo(true);
+          setEstado('ligado');
+        }
         return;
       }
       await pedirPermissoes();
@@ -111,5 +143,5 @@ export function useDispositivosBluetooth() {
     }
   }, []);
 
-  return { estado, procurando, dispositivos, procurar, reverificar, ligar };
+  return { estado, procurando, dispositivos, demo, procurar, reverificar, ligar };
 }

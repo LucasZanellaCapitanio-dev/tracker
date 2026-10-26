@@ -16,7 +16,7 @@ function Aviso({ texto, botao, onPress }) {
 }
 
 export default function AdicionarTag({ onEscolher }) {
-  const { estado, procurando, dispositivos, procurar, reverificar, ligar } = useDispositivosBluetooth();
+  const { estado, procurando, dispositivos, demo, procurar, reverificar, ligar } = useDispositivosBluetooth();
 
   let corpo;
   if (estado === 'verificando') {
@@ -26,10 +26,15 @@ export default function AdicionarTag({ onEscolher }) {
   } else if (estado === 'sem_permissao') {
     corpo = <Aviso texto="Permita o acesso ao Bluetooth para procurar dispositivos." botao="PERMITIR" onPress={reverificar} />;
   } else if (estado === 'indisponivel') {
-    corpo = <Aviso texto="Bluetooth indisponível neste aparelho. Use um build de desenvolvimento, não o Expo Go." />;
+    corpo = <Aviso texto="Bluetooth indisponível aqui. Rode em um build de desenvolvimento (não no Expo Go nem no Snack)." />;
   } else {
     corpo = (
       <>
+        {demo ? (
+          <Text style={s.demo} accessibilityLabel="Modo demonstração. Dispositivos de exemplo.">
+            MODO DEMONSTRAÇÃO · dispositivos de exemplo
+          </Text>
+        ) : null}
         {dispositivos.map((d) => (
           <TouchableOpacity
             key={d.id}
@@ -79,6 +84,7 @@ const s = StyleSheet.create({
     borderBottomColor: cores.texto,
   },
   texto: { fontSize: 26, fontWeight: '800', color: cores.texto, textAlign: 'center' },
+  demo: { textAlign: 'center', fontSize: 14, fontWeight: '800', color: cores.escuro, paddingVertical: 10 },
   aviso: { flex: 1, minHeight: 420, alignItems: 'center', justifyContent: 'center', padding: 16, gap: 20 },
   textoAviso: { fontSize: 24, fontWeight: '800', color: cores.texto, textAlign: 'center' },
   botaoAviso: { alignSelf: 'stretch', minHeight: 72 },
