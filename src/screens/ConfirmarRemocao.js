@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Modal, StyleSheet } from 'react-native';
-import Botao from './Botao';
+import Botao from '../components/Botao';
 import { cores, raio, fonte } from '../theme';
 
 // Janela de confirmação antes de remover. Só interface por enquanto.
