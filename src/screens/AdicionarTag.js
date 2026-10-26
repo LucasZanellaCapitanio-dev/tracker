@@ -32,7 +32,7 @@ export default function AdicionarTag({ onEscolher }) {
       <>
         {demo ? (
           <Text style={s.demo} accessibilityLabel="Identificando aparelhos bluetooth.">
-            MODO DEMONSTRAÇÃO · dispositivos de exemplo
+            Identificando aparelhos bluetooth.
           </Text>
         ) : null}
         {dispositivos.map((d) => (
