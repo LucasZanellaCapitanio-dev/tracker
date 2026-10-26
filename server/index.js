@@ -1,3 +1,4 @@
+/*
 import express from 'express';
 import Anthropic from '@anthropic-ai/sdk';
 
@@ -23,4 +24,4 @@ app.post('/ajuda', async (req, res) => {
   }
 });
 
-app.listen(3000);
+app.listen(3000);*/
