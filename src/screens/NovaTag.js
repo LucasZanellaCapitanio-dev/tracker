@@ -39,7 +39,7 @@ export default function NovaTag({ aparelho = 'aparelho 1', nomeInicial = '', ico
         <View style={s.linhaIcone}>
           <Text style={s.rotulo}>Ícone</Text>
           <TouchableOpacity style={s.icone} onPress={() => setEscolhendo(!escolhendo)} accessibilityRole="button" accessibilityLabel="Escolher ícone">
-            <MaterialCommunityIcons name={icone} size={56} color={cores.branco} />
+            <MaterialCommunityIcons name={icone} size={56} color={cores.texto} />
           </TouchableOpacity>
         </View>
         {escolhendo ? (
@@ -78,7 +78,7 @@ const s = StyleSheet.create({
     width: '70%',
     minHeight: 68,
     borderRadius: raio.pill,
-    backgroundColor: cores.cinza,
+    backgroundColor: cores.amarelo,
     textAlign: 'center',
     fontSize: 26,
     fontWeight: '800',
@@ -96,7 +96,7 @@ const s = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: raio.cartao,
-    backgroundColor: cores.cinza,
+    backgroundColor: cores.amarelo,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -105,7 +105,7 @@ const s = StyleSheet.create({
     width: '30%',
     minHeight: 104,
     borderRadius: raio.cartao,
-    backgroundColor: cores.cinzaAzulado,
+    backgroundColor: cores.amarelo,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,

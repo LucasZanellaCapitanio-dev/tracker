@@ -6,6 +6,13 @@ import Botao from './src/components/Botao';
 import ConfirmarRemocao from './src/screens/ConfirmarRemocao';
 import { cores, raio, fonte } from './src/theme';
 
+// ===== AJUSTE DO BOTÃO TOCAR (mexa só aqui) =====
+// Espaço branco ao redor do botão, em pixels. Menor = botão maior.
+const TOCAR_ESPACO_VERTICAL = 8;   // em cima e embaixo
+const TOCAR_ESPACO_HORIZONTAL = 0;  // esquerda e direita
+const TOCAR_ALTURA_MINIMA = 40;     // o botão nunca fica menor que isso
+// ================================================
+
 // Exemplos só para mostrar a rolagem horizontal.
 const TAGS = [
   { id: '1', nome: 'MALA VIAGEM', icone: 'briefcase-outline' },
@@ -16,9 +23,6 @@ const TAGS = [
 // Sem equipamentos: mostrar "Nenhum equipamento" e botão "Procurar rastreador".
 function Tag({ item, largura, altura, onTocar }) {
   const nome = item.nome.toLowerCase();
-  // Altura livre da zona do TOCAR: o botão ocupa a zona menos 2/3 do espaço que sobraria acima de 220.
-  const [zona, setZona] = useState(0);
-  const alturaTocar = zona > 220 ? zona - (2 / 3) * (zona - 220) : zona;
   return (
     <View style={[s.tag, { width: largura, height: altura }]}>
       <View style={s.linha}>
@@ -34,10 +38,8 @@ function Tag({ item, largura, altura, onTocar }) {
           </View>
         </View>
       </View>
-      <View style={s.zonaTocar} onLayout={(e) => setZona(e.nativeEvent.layout.height)}>
-        {zona > 0 && (
-          <Botao titulo="TOCAR" tamanho="grande" onPress={onTocar} style={[s.tocar, { height: alturaTocar }]} rotulo={`Tocar a tag ${nome}`} />
-        )}
+      <View style={s.zonaTocar}>
+        <Botao titulo="TOCAR" tamanho="grande" onPress={onTocar} style={s.tocar} rotulo={`Tocar a tag ${nome}`} />
       </View>
     </View>
   );
@@ -144,10 +146,9 @@ const s = StyleSheet.create({
   },
   ponto: { width: 16, height: 16, borderRadius: 8, backgroundColor: cores.escuro },
   statusTexto: { fontSize: 24, fontWeight: '800', color: cores.texto },
-  // zona própria do TOCAR: o botão fica centralizado nela
-  zonaTocar: { flex: 1, justifyContent: 'center' },
-  // marginHorizontal negativo tira metade da folga lateral (16 -> 8), simétrico
-  tocar: { alignSelf: 'stretch', marginHorizontal: -8, minHeight: 96 },
+  // a zona ocupa o espaço livre; o botão preenche a zona (menos o espaço definido lá no topo)
+  zonaTocar: { flex: 1, paddingVertical: TOCAR_ESPACO_VERTICAL, paddingHorizontal: TOCAR_ESPACO_HORIZONTAL },
+  tocar: { flex: 1, minHeight: TOCAR_ALTURA_MINIMA },
   icones: { flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center', marginTop: 12 },
   circulo: { width: 80, height: 80, minHeight: 80, borderRadius: 40, paddingHorizontal: 0 },
   paginas: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 12 },
