@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import Cartao from '../components/Cartao';
-import Botao from '../components/Botao';
-import ConfirmarRemocao from '../components/ConfirmarRemocao';
-import { cores, raio, fonte } from '../theme';
+import Cartao from './src/components/Cartao';
+import Botao from './src/components/Botao';
+import ConfirmarRemocao from './src/screens/ConfirmarRemocao';
+import { cores, raio, fonte } from './src/theme';
 
 // Exemplos só para mostrar a rolagem horizontal.
 const TAGS = [
@@ -14,8 +14,11 @@ const TAGS = [
 ];
 
 // Sem equipamentos: mostrar "Nenhum equipamento" e botão "Procurar rastreador".
-function Tag({ item, largura, altura, onTocar, onDesconectar }) {
+function Tag({ item, largura, altura, onTocar }) {
   const nome = item.nome.toLowerCase();
+  // Altura livre da zona do TOCAR: o botão ocupa a zona menos 2/3 do espaço que sobraria acima de 220.
+  const [zona, setZona] = useState(0);
+  const alturaTocar = zona > 220 ? zona - (2 / 3) * (zona - 220) : zona;
   return (
     <View style={[s.tag, { width: largura, height: altura }]}>
       <View style={s.linha}>
@@ -31,15 +34,16 @@ function Tag({ item, largura, altura, onTocar, onDesconectar }) {
           </View>
         </View>
       </View>
-      <Botao titulo="TOCAR" tamanho="grande" onPress={onTocar} style={s.tocar} rotulo={`Tocar a tag ${nome}`} />
-      <View style={s.acoes}>
-        <Botao titulo="DESCONECTAR" tamanho="medio" variante="claro" onPress={onDesconectar} style={[s.acao, s.contorno]} rotulo={`Desconectar a tag ${nome}`} />
+      <View style={s.zonaTocar} onLayout={(e) => setZona(e.nativeEvent.layout.height)}>
+        {zona > 0 && (
+          <Botao titulo="TOCAR" tamanho="grande" onPress={onTocar} style={[s.tocar, { height: alturaTocar }]} rotulo={`Tocar a tag ${nome}`} />
+        )}
       </View>
     </View>
   );
 }
 
-export default function Inicio({ onTocar, onDesconectar, onRemover, onEditar, onAdicionar, onAssistente }) {
+export default function Inicio({ onTocar, onRemover, onEditar, onAdicionar, onAssistente }) {
   // Tamanho real da área da lista: cada página tem exatamente esse tamanho.
   const [medida, setMedida] = useState({ w: 0, h: 0 });
   const [indice, setIndice] = useState(0);
@@ -60,7 +64,7 @@ export default function Inicio({ onTocar, onDesconectar, onRemover, onEditar, on
               data={TAGS}
               keyExtractor={(t) => t.id}
               renderItem={({ item }) => (
-                <Tag item={item} largura={medida.w} altura={medida.h} onTocar={onTocar} onDesconectar={onDesconectar} />
+                <Tag item={item} largura={medida.w} altura={medida.h} onTocar={onTocar} />
               )}
               getItemLayout={(_, i) => ({ length: medida.w, offset: medida.w * i, index: i })}
               showsHorizontalScrollIndicator={false}
@@ -126,8 +130,8 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   info: { flex: 1, gap: 4 },
-  nome: { fontSize: fonte.titulo - 4, fontWeight: '800', color: cores.texto },
-  suave: { fontSize: fonte.rotulo, fontWeight: '700', color: cores.escuro },
+  nome: { fontSize: 38, fontWeight: '800', color: cores.texto },
+  suave: { fontSize: 24, fontWeight: '700', color: cores.escuro },
   status: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
@@ -135,16 +139,15 @@ const s = StyleSheet.create({
     gap: 8,
     backgroundColor: cores.amarelo,
     borderRadius: raio.pill,
-    paddingVertical: 4,
-    paddingHorizontal: 14,
+    paddingVertical: 6,
+    paddingHorizontal: 16,
   },
-  ponto: { width: 12, height: 12, borderRadius: 6, backgroundColor: cores.escuro },
-  statusTexto: { fontSize: 16, fontWeight: '800', color: cores.texto },
-  // o TOCAR ocupa todo o espaço que sobrar, então a tela sempre fecha certinho
-  tocar: { flex: 1, minHeight: 64, marginTop: 10 },
-  acoes: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 },
-  acao: { flex: 1, minHeight: 72 },
-  contorno: { borderWidth: 3, borderColor: cores.escuro },
+  ponto: { width: 16, height: 16, borderRadius: 8, backgroundColor: cores.escuro },
+  statusTexto: { fontSize: 24, fontWeight: '800', color: cores.texto },
+  // zona própria do TOCAR: o botão fica centralizado nela
+  zonaTocar: { flex: 1, justifyContent: 'center' },
+  // marginHorizontal negativo tira metade da folga lateral (16 -> 8), simétrico
+  tocar: { alignSelf: 'stretch', marginHorizontal: -8, minHeight: 96 },
   icones: { flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center', marginTop: 12 },
   circulo: { width: 80, height: 80, minHeight: 80, borderRadius: 40, paddingHorizontal: 0 },
   paginas: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 12 },

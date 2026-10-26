@@ -118,9 +118,6 @@ const s = StyleSheet.create({
   balaoTexto: { fontSize: 28, fontWeight: '800', color: cores.texto },
   entradaBorda: {
     margin: 12,
-    padding: 6,
-    borderRadius: raio.pill,
-    backgroundColor: cores.branco,
   },
   entrada: {
     flexDirection: 'row',
@@ -130,14 +127,14 @@ const s = StyleSheet.create({
     paddingRight: 6,
     height: 96,
     borderRadius: raio.pill,
-    backgroundColor: cores.amarelo,
+    backgroundColor: cores.branco,
   },
   campo: { flex: 1, minWidth: 0, fontSize: 28, fontWeight: '700', color: cores.texto },
   enviar: {
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: cores.branco,
+    backgroundColor: cores.amarelo,
     alignItems: 'center',
     justifyContent: 'center',
   },

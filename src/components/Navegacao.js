@@ -51,7 +51,7 @@ export function BarraNav({ ativa, onChange, fundo = cores.branco }) {
           accessibilityLabel={item.rotulo}
           accessibilityState={{ selected: ativa === item.id }}
         >
-          <MaterialCommunityIcons name={item.icone} size={44} color={cores.texto} />
+          <MaterialCommunityIcons name={item.icone} size={66} color={cores.texto} />
         </TouchableOpacity>
       ))}
     </View>
@@ -63,13 +63,13 @@ const s = StyleSheet.create({
   lado: { width: 56, alignItems: 'center' },
   titulo: { flex: 1, textAlign: 'center', fontSize: fonte.titulo, fontWeight: '800', color: cores.texto },
   iconeBotao: { width: 56, height: 56, alignItems: 'center', justifyContent: 'center' },
-  barra: { flexDirection: 'row', paddingBottom: 12 },
+  barra: { flexDirection: 'row', paddingBottom: 18 },
   item: {
     flex: 1,
-    height: 72,
+    height: 108,
     alignItems: 'center',
     justifyContent: 'center',
-    borderTopWidth: 5,
+    borderTopWidth: 8,
     borderTopColor: 'transparent',
     borderRightWidth: 2,
     borderRightColor: cores.cinzaAzulado,

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Platform, StatusBar } from 'react-native';
 import { Cabecalho, BarraNav } from './src/components/Navegacao';
-import Inicio from './src/screens/Inicio';
+import Inicio from './Inicio';
 import Configuracoes from './src/screens/Configuracoes';
 import Descricao from './src/screens/Descricao';
 import Assistente from './src/screens/Assistente';
@@ -14,7 +14,7 @@ const TITULOS = {
   config: 'CONFIGURAÇÕES',
   inicio: 'TRACKER',
   como: 'COMO USAR',
-  assistente: 'Assistente',
+  assistente: 'ASSISTENTE',
   adicionar: 'ADICIONAR TAG',
   novaTag: 'ADICIONAR TAG',
   editar: 'EDITAR TAG',
@@ -27,7 +27,6 @@ export default function App() {
   const [tela, setTela] = useState('inicio');
   const [aparelho, setAparelho] = useState('aparelho 1');
   const [editando, setEditando] = useState({ nome: '', icone: 'briefcase-outline' });
-  const doAssistente = tela === 'assistente';
 
   const esquerda = VOLTAR[tela]
     ? { icone: 'arrow-left', rotulo: 'Voltar', onPress: () => setTela(VOLTAR[tela]) }
@@ -47,7 +46,7 @@ export default function App() {
 
   return (
     <View style={s.root}>
-      <Cabecalho titulo={TITULOS[tela]} fundo={doAssistente ? cores.amarelo : cores.branco} esquerda={esquerda} />
+      <Cabecalho titulo={TITULOS[tela]} fundo={cores.branco} esquerda={esquerda} />
       <View style={{ flex: 1 }}>
         {conteudo}
       </View>
