@@ -5,8 +5,18 @@ import Cartao from '../components/Cartao';
 import Botao from '../components/Botao';
 import { cores, raio } from '../theme';
 
-export default function NovaTag({ aparelho = 'aparelho 1', nomeInicial = '', icone = 'briefcase-outline', textoBotao = 'CRIAR TAG', onConfirmar }) {
+const ICONES = [
+  { id: 'briefcase-outline', rotulo: 'Mala' },
+  { id: 'cellphone', rotulo: 'Celular' },
+  { id: 'television', rotulo: 'TV' },
+  { id: 'laptop', rotulo: 'Notebook' },
+  { id: 'bed-outline', rotulo: 'Cama' },
+];
+
+export default function NovaTag({ aparelho = 'aparelho 1', nomeInicial = '', icone: iconeInicial = 'briefcase-outline', textoBotao = 'CRIAR TAG', onConfirmar }) {
   const [nome, setNome] = useState(nomeInicial);
+  const [icone, setIcone] = useState(iconeInicial);
+  const [escolhendo, setEscolhendo] = useState(false);
 
   return (
     <ScrollView style={s.tela} contentContainerStyle={s.pad} keyboardShouldPersistTaps="handled">
@@ -28,10 +38,27 @@ export default function NovaTag({ aparelho = 'aparelho 1', nomeInicial = '', ico
 
         <View style={s.linhaIcone}>
           <Text style={s.rotulo}>Ícone</Text>
-          <TouchableOpacity style={s.icone} accessibilityRole="button" accessibilityLabel="Escolher ícone">
+          <TouchableOpacity style={s.icone} onPress={() => setEscolhendo(!escolhendo)} accessibilityRole="button" accessibilityLabel="Escolher ícone">
             <MaterialCommunityIcons name={icone} size={56} color={cores.branco} />
           </TouchableOpacity>
         </View>
+        {escolhendo ? (
+          <View style={s.opcoes}>
+            {ICONES.map((o) => (
+              <TouchableOpacity
+                key={o.id}
+                style={[s.opcao, icone === o.id && s.opcaoAtiva]}
+                onPress={() => { setIcone(o.id); setEscolhendo(false); }}
+                accessibilityRole="button"
+                accessibilityLabel={o.rotulo}
+                accessibilityState={{ selected: icone === o.id }}
+              >
+                <MaterialCommunityIcons name={o.id} size={44} color={icone === o.id ? cores.branco : cores.texto} />
+                <Text style={[s.opcaoTexto, icone === o.id && { color: cores.branco }]}>{o.rotulo}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : null}
         <View style={s.divisor} />
 
         <Botao titulo={textoBotao} variante="azul" tamanho="grande" onPress={onConfirmar} style={s.criar} />
@@ -73,5 +100,17 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  opcoes: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 12, paddingBottom: 18, paddingHorizontal: 8 },
+  opcao: {
+    width: '30%',
+    minHeight: 104,
+    borderRadius: raio.cartao,
+    backgroundColor: cores.cinzaAzulado,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  opcaoAtiva: { backgroundColor: cores.escuro },
+  opcaoTexto: { fontSize: 18, fontWeight: '800', color: cores.texto },
   criar: { alignSelf: 'center', width: '70%', minHeight: 96, marginVertical: 26 },
 });

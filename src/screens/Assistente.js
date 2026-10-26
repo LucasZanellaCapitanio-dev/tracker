@@ -10,7 +10,7 @@ function Balao({ role, children }) {
   const robo = role !== 'user';
   return (
     <View style={[s.balao, robo ? s.balaoRobo : s.balaoUsuario]}>
-      <MaterialCommunityIcons name={robo ? 'robot-happy-outline' : 'account'} size={36} color={cores.texto} />
+      <MaterialCommunityIcons name={robo ? 'robot-happy-outline' : 'account'} size={48} color={cores.texto} />
       <Text style={s.balaoTexto}>{children}</Text>
     </View>
   );
@@ -69,7 +69,7 @@ export default function Assistente() {
 
       <View style={s.entradaBorda}>
         <View style={s.entrada}>
-          <MaterialCommunityIcons name="magnify" size={36} color={cores.texto} />
+          <MaterialCommunityIcons name="magnify" size={44} color={cores.texto} />
           <TextInput
             style={s.campo}
             value={texto}
@@ -81,12 +81,12 @@ export default function Assistente() {
           />
           {texto.trim() ? (
             <TouchableOpacity style={s.enviar} onPress={enviar} accessibilityRole="button" accessibilityLabel="Enviar mensagem">
-              <MaterialCommunityIcons name="send" size={30} color={cores.texto} />
+              <MaterialCommunityIcons name="send" size={38} color={cores.texto} />
             </TouchableOpacity>
           ) : null}
           {/* Microfone sempre fixo no canto direito da barra */}
           <TouchableOpacity style={s.mic} onPress={falar} accessibilityRole="button" accessibilityLabel="Falar com o assistente">
-            <MaterialCommunityIcons name="microphone" size={32} color={cores.branco} />
+            <MaterialCommunityIcons name="microphone" size={48} color={cores.branco} />
           </TouchableOpacity>
         </View>
       </View>
@@ -95,7 +95,7 @@ export default function Assistente() {
 }
 
 const s = StyleSheet.create({
-  tela: { flex: 1, backgroundColor: cores.branco },
+  tela: { flex: 1, backgroundColor: cores.amarelo },
   voz: {
     alignSelf: 'center',
     width: 240,
@@ -112,15 +112,15 @@ const s = StyleSheet.create({
   vozTexto: { flex: 1, textAlign: 'center', fontSize: fonte.titulo - 4, fontWeight: '800', color: cores.texto },
   vozBolinha: { width: 40, height: 40, borderRadius: 20, backgroundColor: cores.texto },
   pad: { padding: 16, gap: 14 },
-  balao: { maxWidth: '82%', borderRadius: raio.cartao, padding: 14, gap: 4 },
-  balaoRobo: { alignSelf: 'flex-start', backgroundColor: cores.amarelo },
-  balaoUsuario: { alignSelf: 'flex-end', backgroundColor: cores.azul },
-  balaoTexto: { fontSize: fonte.rotulo, fontWeight: '800', color: cores.texto },
+  balao: { maxWidth: '88%', borderRadius: raio.cartao, padding: 18, gap: 6, backgroundColor: cores.branco },
+  balaoRobo: { alignSelf: 'flex-start' },
+  balaoUsuario: { alignSelf: 'flex-end' },
+  balaoTexto: { fontSize: 28, fontWeight: '800', color: cores.texto },
   entradaBorda: {
     margin: 12,
     padding: 6,
     borderRadius: raio.pill,
-    backgroundColor: cores.amarelo,
+    backgroundColor: cores.branco,
   },
   entrada: {
     flexDirection: 'row',
@@ -128,23 +128,23 @@ const s = StyleSheet.create({
     gap: 8,
     paddingLeft: 14,
     paddingRight: 6,
-    height: 68,
+    height: 96,
     borderRadius: raio.pill,
-    backgroundColor: cores.branco,
-  },
-  campo: { flex: 1, minWidth: 0, fontSize: fonte.rotulo, fontWeight: '700', color: cores.texto },
-  enviar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
     backgroundColor: cores.amarelo,
+  },
+  campo: { flex: 1, minWidth: 0, fontSize: 28, fontWeight: '700', color: cores.texto },
+  enviar: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: cores.branco,
     alignItems: 'center',
     justifyContent: 'center',
   },
   mic: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: cores.texto,
     alignItems: 'center',
     justifyContent: 'center',

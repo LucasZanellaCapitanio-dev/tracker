@@ -84,7 +84,7 @@ const s = StyleSheet.create({
     borderBottomColor: cores.texto,
   },
   texto: { fontSize: 26, fontWeight: '800', color: cores.texto, textAlign: 'center' },
-  demo: { textAlign: 'center', fontSize: 14, fontWeight: '800', color: cores.escuro, paddingVertical: 10 },
+  demo: { textAlign: 'center', fontSize: 26, fontWeight: '800', color: cores.escuro, paddingVertical: 10 },
   aviso: { flex: 1, minHeight: 420, alignItems: 'center', justifyContent: 'center', padding: 16, gap: 20 },
   textoAviso: { fontSize: 24, fontWeight: '800', color: cores.texto, textAlign: 'center' },
   botaoAviso: { alignSelf: 'stretch', minHeight: 72 },

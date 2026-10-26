@@ -28,14 +28,12 @@ export default function Configuracoes() {
 
   return (
     <ScrollView style={s.tela} contentContainerStyle={s.pad}>
-      <Text style={s.secao} accessibilityRole="header">CONFIGURAÇÕES</Text>
       <Cartao style={s.grupo}>
         <Linha rotulo="LEITURA POR VOZ" valor={leitura} onChange={setLeitura} />
         <Linha rotulo="RESPOSTA POR ÁUDIO" valor={resposta} onChange={setResposta} />
         <Linha rotulo="VIBRAÇÃO DO RASTREADOR" valor={vibracao} onChange={setVibracao} />
         <Linha rotulo="SOM DO RASTREADOR" valor={som} onChange={setSom} ultima />
       </Cartao>
-      <Text style={s.versao}>Versão v2.0.7</Text>
     </ScrollView>
   );
 }
@@ -43,18 +41,17 @@ export default function Configuracoes() {
 const s = StyleSheet.create({
   tela: { flex: 1, backgroundColor: cores.amarelo },
   pad: { padding: 20 },
-  secao: { fontSize: fonte.secao, fontWeight: '800', color: cores.texto, marginBottom: 10 },
   grupo: { padding: 0, overflow: 'hidden' },
   linha: {
-    minHeight: 84,
+    minHeight: 120,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: 20,
     paddingHorizontal: 16,
+    paddingVertical: 14,
   },
   divisor: { borderBottomWidth: 2, borderBottomColor: cores.texto },
-  rotulo: { flex: 1, fontSize: fonte.rotulo, fontWeight: '800', color: cores.texto },
-  interruptor: { transform: [{ scaleX: 1.3 }, { scaleY: 1.3 }] },
-  versao: { marginTop: 16, textAlign: 'center', fontSize: 14, fontWeight: '700', color: cores.escuro },
+  rotulo: { flex: 1, fontSize: 28, fontWeight: '800', color: cores.texto },
+  interruptor: { transform: [{ scaleX: 1.6 }, { scaleY: 1.6 }] },
 });
