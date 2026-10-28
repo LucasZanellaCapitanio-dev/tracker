@@ -57,7 +57,7 @@ export function useDispositivosBluetooth() {
     clearTimeout(timer.current);
     timersDemo.current.forEach(clearTimeout);
     timersDemo.current = [];
-    try { ble.current && ble.current.stopDeviceScan(); } catch (e) { /* o scan pode já estar parado; pode ignorar */ }
+    try { ble.current && ble.current.stopDeviceScan(); } catch (e) {}
     setProcurando(false);
   }, []);
 

@@ -3,7 +3,7 @@ import { View, Text, TextInput, ScrollView, TouchableOpacity, KeyboardAvoidingVi
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { cores, raio, fonte } from '../theme';
 
-const API = 'http://SEU_IP:3000'; // em produção, uma URL https
+const API = 'https://tracker-servidor.onrender.com'; // em produção, uma URL https
 const SAUDACAO = 'Olá! Sou o assistente do Tracker. Como posso ajudar?';
 
 function Balao({ role, children }) {
