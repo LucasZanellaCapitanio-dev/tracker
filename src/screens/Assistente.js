@@ -1,7 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TextInput, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useAudioRecorder, RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync, createAudioPlayer } from 'expo-audio';
+import { useAudioRecorder, RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync } from 'expo-audio';
+import * as Speech from 'expo-speech';
 import { cores, raio, fonte } from '../theme';
 
 // >>> TROQUE pelo endereço que o Render mostrou (sem barra no final) <<<
@@ -25,13 +26,12 @@ export default function Assistente() {
   const [voz, setVoz] = useState(true);
   const [gravando, setGravando] = useState(false);
   const gravador = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
-  const player = useRef(null);
 
-  function tocar(url) {
+  // o próprio celular fala a resposta (grátis, sem servidor)
+  function falarTexto(texto) {
     try {
-      if (player.current) player.current.pause();
-      player.current = createAudioPlayer({ uri: `${API}${url}` });
-      player.current.play();
+      Speech.stop();
+      Speech.speak(texto, { language: 'pt-BR', rate: 0.95 });
     } catch {}
   }
 
@@ -45,11 +45,11 @@ export default function Assistente() {
       const r = await fetch(`${API}/ajuda`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mensagens: novas, falar: voz }),
+        body: JSON.stringify({ mensagens: novas }),
       });
-      const { texto: resposta, audioUrl, erro } = await r.json();
+      const { texto: resposta, erro } = await r.json();
       setMsgs([...novas, { role: 'assistant', content: resposta ?? erro ?? 'Sem resposta.' }]);
-      if (voz && audioUrl) tocar(audioUrl);
+      if (voz && resposta) falarTexto(resposta);
     } catch {
       setMsgs([...novas, { role: 'assistant', content: 'Não consegui responder agora.' }]);
     } finally {
@@ -88,7 +88,7 @@ export default function Assistente() {
         return;
       }
       setMsgs([...msgs, { role: 'user', content: d.pergunta }, { role: 'assistant', content: d.texto }]);
-      if (voz) tocar(d.audioUrl);
+      if (voz) falarTexto(d.texto);
     } catch {
       setMsgs([...msgs, { role: 'assistant', content: 'Não consegui ouvir. Tente de novo.' }]);
     } finally {
