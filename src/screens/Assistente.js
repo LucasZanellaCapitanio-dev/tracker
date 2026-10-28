@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useAudioRecorder, RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync, createAudioPlayer } from 'expo-audio';
 import { cores, raio, fonte } from '../theme';
 
-const API = 'https://tracker-servidor.onrender.com'; // em produção, uma URL https
+// >>> TROQUE pelo endereço que o Render mostrou (sem barra no final) <<<
+const API = 'https://tracker-servidor.onrender.com';
 const SAUDACAO = 'Olá! Sou o assistente do Tracker. Como posso ajudar?';
 
 function Balao({ role, children }) {
@@ -21,6 +23,17 @@ export default function Assistente() {
   const [texto, setTexto] = useState('');
   const [carregando, setCarregando] = useState(false);
   const [voz, setVoz] = useState(true);
+  const [gravando, setGravando] = useState(false);
+  const gravador = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const player = useRef(null);
+
+  function tocar(url) {
+    try {
+      if (player.current) player.current.pause();
+      player.current = createAudioPlayer({ uri: `${API}${url}` });
+      player.current.play();
+    } catch {}
+  }
 
   async function enviar() {
     if (!texto.trim() || carregando) return;
@@ -32,10 +45,11 @@ export default function Assistente() {
       const r = await fetch(`${API}/ajuda`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mensagens: novas }),
+        body: JSON.stringify({ mensagens: novas, falar: voz }),
       });
-      const { texto: resposta } = await r.json();
+      const { texto: resposta, audioUrl } = await r.json();
       setMsgs([...novas, { role: 'assistant', content: resposta ?? 'Sem resposta.' }]);
+      if (voz && audioUrl) tocar(audioUrl);
     } catch {
       setMsgs([...novas, { role: 'assistant', content: 'Não consegui responder agora.' }]);
     } finally {
@@ -43,8 +57,40 @@ export default function Assistente() {
     }
   }
 
-  function falar() {
-    // TODO: ligar aqui a IA por voz (parte de vocês).
+  // 1º toque: começa a gravar. 2º toque: para, envia e toca a resposta.
+  async function falar() {
+    if (carregando) return;
+    if (!gravando) {
+      try {
+        const { granted } = await requestRecordingPermissionsAsync();
+        if (!granted) return;
+        await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+        await gravador.prepareToRecordAsync();
+        gravador.record();
+        setGravando(true);
+      } catch {
+        setMsgs([...msgs, { role: 'assistant', content: 'Não consegui usar o microfone.' }]);
+      }
+      return;
+    }
+    setGravando(false);
+    setCarregando(true);
+    try {
+      await gravador.stop();
+      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
+      const f = new FormData();
+      f.append('audio', { uri: gravador.uri, name: 'voz.m4a', type: 'audio/m4a' });
+      f.append('historico', JSON.stringify(msgs));
+      const r = await fetch(`${API}/voz`, { method: 'POST', body: f });
+      const d = await r.json();
+      if (!d.texto) throw new Error('sem resposta');
+      setMsgs([...msgs, { role: 'user', content: d.pergunta }, { role: 'assistant', content: d.texto }]);
+      if (voz) tocar(d.audioUrl);
+    } catch {
+      setMsgs([...msgs, { role: 'assistant', content: 'Não consegui ouvir. Tente de novo.' }]);
+    } finally {
+      setCarregando(false);
+    }
   }
 
   return (
@@ -65,6 +111,8 @@ export default function Assistente() {
         {msgs.map((m, i) => (
           <Balao key={i} role={m.role}>{m.content}</Balao>
         ))}
+        {gravando ? <Balao role="assistant">Estou ouvindo... toque no microfone para enviar.</Balao> : null}
+        {carregando ? <Balao role="assistant">Pensando...</Balao> : null}
       </ScrollView>
 
       <View style={s.entradaBorda}>
@@ -85,8 +133,8 @@ export default function Assistente() {
             </TouchableOpacity>
           ) : null}
           {/* Microfone sempre fixo no canto direito da barra */}
-          <TouchableOpacity style={s.mic} onPress={falar} accessibilityRole="button" accessibilityLabel="Falar com o assistente">
-            <MaterialCommunityIcons name="microphone" size={48} color={cores.branco} />
+          <TouchableOpacity style={[s.mic, gravando && s.micGravando]} onPress={falar} accessibilityRole="button" accessibilityLabel={gravando ? 'Gravando. Toque para enviar' : 'Falar com o assistente'}>
+            <MaterialCommunityIcons name={gravando ? 'stop' : 'microphone'} size={48} color={cores.branco} />
           </TouchableOpacity>
         </View>
       </View>
@@ -138,6 +186,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  micGravando: { backgroundColor: '#E53935' },
   mic: {
     width: 80,
     height: 80,
