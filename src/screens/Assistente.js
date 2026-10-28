@@ -47,8 +47,8 @@ export default function Assistente() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mensagens: novas, falar: voz }),
       });
-      const { texto: resposta, audioUrl } = await r.json();
-      setMsgs([...novas, { role: 'assistant', content: resposta ?? 'Sem resposta.' }]);
+      const { texto: resposta, audioUrl, erro } = await r.json();
+      setMsgs([...novas, { role: 'assistant', content: resposta ?? erro ?? 'Sem resposta.' }]);
       if (voz && audioUrl) tocar(audioUrl);
     } catch {
       setMsgs([...novas, { role: 'assistant', content: 'Não consegui responder agora.' }]);
@@ -83,7 +83,10 @@ export default function Assistente() {
       f.append('historico', JSON.stringify(msgs));
       const r = await fetch(`${API}/voz`, { method: 'POST', body: f });
       const d = await r.json();
-      if (!d.texto) throw new Error('sem resposta');
+      if (!d.texto) {
+        setMsgs([...msgs, { role: 'assistant', content: d.erro ?? 'Sem resposta.' }]);
+        return;
+      }
       setMsgs([...msgs, { role: 'user', content: d.pergunta }, { role: 'assistant', content: d.texto }]);
       if (voz) tocar(d.audioUrl);
     } catch {

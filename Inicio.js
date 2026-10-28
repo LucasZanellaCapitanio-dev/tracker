@@ -8,9 +8,9 @@ import { cores, raio, fonte } from './src/theme';
 
 // ===== AJUSTE DO BOTÃO TOCAR (mexa só aqui) =====
 // Espaço branco ao redor do botão, em pixels. Menor = botão maior.
-const TOCAR_ESPACO_VERTICAL = 12;   // em cima e embaixo
-const TOCAR_ESPACO_HORIZONTAL = 0;  // esquerda e direita
-const TOCAR_ALTURA_MINIMA = 80;     // o botão nunca fica menor que isso
+const TOCAR_ESPACO_VERTICAL = 20;   // em cima e embaixo
+const TOCAR_ESPACO_HORIZONTAL = 30; // esquerda e direita
+const TOCAR_ALTURA_MINIMA = 30;     // o botão nunca fica menor que isso
 // ================================================
 
 // Exemplos só para mostrar a rolagem horizontal.
