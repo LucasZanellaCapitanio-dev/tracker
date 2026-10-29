@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Platform, StatusBar } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Cabecalho, BarraNav } from './src/components/Navegacao';
 import Inicio from './Inicio';
 import Configuracoes from './src/screens/Configuracoes';
@@ -24,6 +25,14 @@ const NA_BARRA = ['config', 'inicio', 'como'];
 const VOLTAR = { assistente: 'inicio', adicionar: 'inicio', novaTag: 'adicionar', editar: 'inicio' };
 
 export default function App() {
+  return (
+    <SafeAreaProvider>
+      <Principal />
+    </SafeAreaProvider>
+  );
+}
+
+function Principal() {
   const [tela, setTela] = useState('inicio');
   const [aparelho, setAparelho] = useState('aparelho 1');
   const [editando, setEditando] = useState({ nome: '', icone: 'briefcase-outline' });

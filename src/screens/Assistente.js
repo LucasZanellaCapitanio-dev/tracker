@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAudioRecorder, RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync } from 'expo-audio';
 import * as Speech from 'expo-speech';
 import { cores, raio, fonte } from '../theme';
+
+// Gravação em voz mono e mais leve (melhor para reconhecer fala)
+const GRAVACAO = { ...RecordingPresets.HIGH_QUALITY, sampleRate: 16000, numberOfChannels: 1, bitRate: 64000 };
 
 // >>> TROQUE pelo endereço que o Render mostrou (sem barra no final) <<<
 const API = 'https://tracker-servidor.onrender.com';
@@ -25,14 +28,36 @@ export default function Assistente() {
   const [carregando, setCarregando] = useState(false);
   const [voz, setVoz] = useState(true);
   const [gravando, setGravando] = useState(false);
-  const gravador = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const inicio = useRef(0);
+  const gravador = useAudioRecorder(GRAVACAO);
 
   // o próprio celular fala a resposta (grátis, sem servidor)
-  function falarTexto(texto) {
+  function avisar(texto) {
+    setMsgs((m) => [...m, { role: 'assistant', content: texto }]);
+  }
+
+  async function falarTexto(texto) {
     try {
       Speech.stop();
-      Speech.speak(texto, { language: 'pt-BR', rate: 0.95 });
-    } catch {}
+      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
+      const opcoes = { language: 'pt-BR', rate: 0.95, onError: () => avisar('Não consegui falar a resposta em voz alta.') };
+      try {
+        const vozes = await Speech.getAvailableVoicesAsync();
+        const pt = vozes.find((v) => (v.language || '').toLowerCase().replace('_', '-') === 'pt-br')
+          || vozes.find((v) => (v.language || '').toLowerCase().startsWith('pt'));
+        if (pt) opcoes.voice = pt.identifier;
+        else if (vozes.length > 0) avisar('Seu celular não tem voz em português. Instale em Configurações, Idioma, Saída de texto para fala.');
+      } catch { /* sem lista de vozes: tenta falar mesmo assim */ }
+      Speech.speak(texto, opcoes);
+    } catch (e) {
+      avisar(`Erro na voz: ${e?.message ?? e}`);
+    }
+  }
+
+  // Liga/desliga a voz da IA. Desligando, para de falar na hora.
+  function alternarVoz() {
+    if (voz) Speech.stop();
+    setVoz(!voz);
   }
 
   async function enviar() {
@@ -57,40 +82,66 @@ export default function Assistente() {
     }
   }
 
+  // Envia o áudio com XMLHttpRequest. O fetch do Expo não aceita arquivo no FormData
+  // ("Unsupported FormDataPart implementation"), mas o XMLHttpRequest aceita.
+  function enviarAudio(uri, historico) {
+    return new Promise((resolve, reject) => {
+      const f = new FormData();
+      f.append('audio', { uri, name: 'voz.m4a', type: 'audio/m4a' });
+      f.append('historico', JSON.stringify(historico));
+      const xhr = new XMLHttpRequest();
+      xhr.timeout = 90000; // o servidor gratuito pode demorar a acordar
+      xhr.onload = () => {
+        try { resolve(JSON.parse(xhr.responseText)); } catch (e) { reject(new Error('resposta inválida do servidor')); }
+      };
+      xhr.onerror = () => reject(new Error('sem conexão com o servidor'));
+      xhr.ontimeout = () => reject(new Error('o servidor demorou demais'));
+      xhr.open('POST', `${API}/voz`);
+      xhr.send(f);
+    });
+  }
+
   // 1º toque: começa a gravar. 2º toque: para, envia e toca a resposta.
   async function falar() {
     if (carregando) return;
     if (!gravando) {
       try {
+        Speech.stop(); // a voz do app não pode ser gravada junto
         const { granted } = await requestRecordingPermissionsAsync();
-        if (!granted) return;
+        if (!granted) {
+          setMsgs([...msgs, { role: 'assistant', content: 'Sem permissão do microfone. Ative nas configurações do celular, em Expo Go.' }]);
+          return;
+        }
         await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
         await gravador.prepareToRecordAsync();
         gravador.record();
+        inicio.current = Date.now();
         setGravando(true);
-      } catch {
-        setMsgs([...msgs, { role: 'assistant', content: 'Não consegui usar o microfone.' }]);
+      } catch (e) {
+        setMsgs([...msgs, { role: 'assistant', content: `Erro ao gravar: ${e?.message ?? e}` }]);
       }
       return;
     }
     setGravando(false);
+    if (Date.now() - inicio.current < 1000) {
+      await gravador.stop();
+      setMsgs([...msgs, { role: 'assistant', content: 'Gravação muito curta. Fale por pelo menos 2 segundos.' }]);
+      return;
+    }
     setCarregando(true);
     try {
       await gravador.stop();
       await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
-      const f = new FormData();
-      f.append('audio', { uri: gravador.uri, name: 'voz.m4a', type: 'audio/m4a' });
-      f.append('historico', JSON.stringify(msgs));
-      const r = await fetch(`${API}/voz`, { method: 'POST', body: f });
-      const d = await r.json();
+      if (!gravador.uri) throw new Error('sem arquivo');
+      const d = await enviarAudio(gravador.uri, msgs);
       if (!d.texto) {
         setMsgs([...msgs, { role: 'assistant', content: d.erro ?? 'Sem resposta.' }]);
         return;
       }
-      setMsgs([...msgs, { role: 'user', content: d.pergunta }, { role: 'assistant', content: d.texto }]);
+      setMsgs([...msgs, ...(d.pergunta ? [{ role: 'user', content: d.pergunta }] : []), { role: 'assistant', content: d.texto }]);
       if (voz) falarTexto(d.texto);
-    } catch {
-      setMsgs([...msgs, { role: 'assistant', content: 'Não consegui ouvir. Tente de novo.' }]);
+    } catch (e) {
+      setMsgs([...msgs, { role: 'assistant', content: `Erro ao enviar o áudio: ${e?.message ?? e}` }]);
     } finally {
       setCarregando(false);
     }
@@ -100,13 +151,15 @@ export default function Assistente() {
     <KeyboardAvoidingView style={s.tela} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <TouchableOpacity
         style={[s.voz, !voz && s.vozOff]}
-        onPress={() => setVoz(!voz)}
+        onPress={alternarVoz}
         accessibilityRole="switch"
-        accessibilityLabel="Voz"
+        accessibilityLabel={voz ? 'Voz ligada. Toque para desligar' : 'Voz desligada. Toque para ligar'}
         accessibilityState={{ checked: voz }}
       >
+        {/* bolinha à direita = voz ligada | à esquerda = voz desligada */}
+        {!voz && <View style={s.vozBolinha} />}
         <Text style={s.vozTexto}>VOZ</Text>
-        <View style={s.vozBolinha} />
+        {voz && <View style={s.vozBolinha} />}
       </TouchableOpacity>
 
       <ScrollView contentContainerStyle={s.pad}>

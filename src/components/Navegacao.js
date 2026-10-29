@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { cores, fonte } from '../theme';
 
 export function BotaoIcone({ nome, rotulo, onPress, tamanho = 32 }) {
@@ -33,6 +34,9 @@ export function Cabecalho({ titulo, fundo = cores.branco, esquerda, direita }) {
   );
 }
 
+// Espaço extra (em pixels) abaixo da barra, somado ao espaço dos botões do celular. Aumente para subir mais.
+const EXTRA_EMBAIXO = 12;
+
 const ITENS = [
   { id: 'config', icone: 'cog-outline', rotulo: 'Configurações' },
   { id: 'inicio', icone: 'home', rotulo: 'Início' },
@@ -40,8 +44,10 @@ const ITENS = [
 ];
 
 export function BarraNav({ ativa, onChange, fundo = cores.branco }) {
+  // sobe a barra acima dos botões do próprio celular (voltar / início / recentes)
+  const insets = useSafeAreaInsets();
   return (
-    <View style={[s.barra, { backgroundColor: fundo }]}>
+    <View style={[s.barra, { backgroundColor: fundo, paddingBottom: insets.bottom + EXTRA_EMBAIXO }]}>
       {ITENS.map((item) => (
         <TouchableOpacity
           key={item.id}
@@ -63,7 +69,7 @@ const s = StyleSheet.create({
   lado: { width: 56, alignItems: 'center' },
   titulo: { flex: 1, textAlign: 'center', fontSize: fonte.titulo, fontWeight: '800', color: cores.texto },
   iconeBotao: { width: 56, height: 56, alignItems: 'center', justifyContent: 'center' },
-  barra: { flexDirection: 'row', paddingBottom: 18 },
+  barra: { flexDirection: 'row' },
   item: {
     flex: 1,
     height: 108,
