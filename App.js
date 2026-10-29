@@ -47,7 +47,7 @@ function Principal() {
   let conteudo;
   if (tela === 'config') conteudo = <Configuracoes />;
   else if (tela === 'como') conteudo = <Descricao />;
-  else if (tela === 'assistente') conteudo = <Assistente />;
+  else if (tela === 'assistente') conteudo = <Assistente onNavegar={setTela} />;
   else if (tela === 'adicionar') conteudo = <AdicionarTag onEscolher={(d) => { setAparelho(d.nome); setTela('novaTag'); }} />;
   else if (tela === 'novaTag') conteudo = <NovaTag aparelho={aparelho} onConfirmar={() => setTela('inicio')} />;
   else if (tela === 'editar') conteudo = <EditarTag tag={editando} onSalvar={() => setTela('inicio')} />;

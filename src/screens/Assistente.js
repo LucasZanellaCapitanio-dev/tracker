@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAudioRecorder, RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync } from 'expo-audio';
@@ -11,6 +11,39 @@ const GRAVACAO = { ...RecordingPresets.HIGH_QUALITY, sampleRate: 16000, numberOf
 // >>> TROQUE pelo endereço que o Render mostrou (sem barra no final) <<<
 const API = 'https://tracker-servidor.onrender.com';
 const SAUDACAO = 'Olá! Sou o assistente do Tracker. Como posso ajudar?';
+
+// ---------- NAVEGAÇÃO POR PEDIDO (texto ou voz) ----------
+// ids iguais aos de tela do App.js
+const NOMES_TELAS = { config: 'Configurações', inicio: 'Início', como: 'Como usar', adicionar: 'Adicionar tag' };
+
+const DESTINOS = [
+  { id: 'config', re: /\b(configurac\w*|ajustes?|opcoes)\b/ },
+  { id: 'como', re: /\b(como usar|tutorial|instrucoes|tela de ajuda)\b/ },
+  { id: 'adicionar', re: /\b(adicion\w*|nova|novo|cadastr\w*)\s+(uma\s+|um\s+)?(tag|aparelho|dispositivo)\b/ },
+  { id: 'inicio', re: /\b(inicio|tela inicial|principal|home|voltar)\b/ },
+];
+const VERBO_IR = /\b(ir|va|vai|vamos|abr\w*|ver|mostr\w*|naveg\w*|lev\w*|troc\w*|mud\w*|quero|acess\w*|entr\w*)\b/;
+
+const normalizar = (txt) => (txt || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z\s]/g, ' ').replace(/\s+/g, ' ').trim();
+
+// Devolve o id da tela pedida ("quero ir para as configurações") ou null.
+// Exige um verbo de ir/abrir, ou uma frase curta só com o nome da tela.
+function destinoDe(txt) {
+  const n = normalizar(txt);
+  if (!n) return null;
+  if (/^(como|o que|qual|quais|por que|onde|quando)\b/.test(n)) return null; // pergunta: deixa a IA responder
+  const achado = DESTINOS.find((d) => d.re.test(n));
+  if (!achado) return null;
+  const curta = n.split(' ').length <= 3;
+  return VERBO_IR.test(n) || curta ? achado.id : null;
+}
+
+// A IA (servidor) também pode pedir navegação escrevendo [IR:config], [IR:inicio], [IR:como] ou [IR:adicionar].
+function separarComando(resposta) {
+  const m = /\[IR:(\w+)\]/.exec(resposta || '');
+  const limpo = (resposta || '').replace(/\[IR:\w+\]/g, '').trim();
+  return { limpo, destino: m && NOMES_TELAS[m[1]] ? m[1] : null };
+}
 
 // Mensagens de aviso/erro não contam como "última resposta" para repetir.
 const ehAviso = (t) => /^(Erro|Sem permissão|Gravação muito curta|Falha|Não consegui|Seu celular não tem voz|O áudio ficou)/.test(t);
@@ -47,7 +80,7 @@ function Balao({ role, children, onRepetir }) {
   );
 }
 
-export default function Assistente() {
+export default function Assistente({ onNavegar }) {
   const [msgs, setMsgs] = useState([]);
   const [texto, setTexto] = useState('');
   const [carregando, setCarregando] = useState(false);
@@ -55,6 +88,23 @@ export default function Assistente() {
   const [gravando, setGravando] = useState(false);
   const inicio = useRef(0);
   const gravador = useAudioRecorder(GRAVACAO);
+  const timerNav = useRef(null);
+
+  // se a pessoa sair da tela sozinha antes da navegação automática, cancela
+  useEffect(() => () => clearTimeout(timerNav.current), []);
+
+  // Vai para outra tela depois de mostrar (e falar) a frase, para dar tempo de ler/ouvir
+  function irPara(id) {
+    clearTimeout(timerNav.current);
+    timerNav.current = setTimeout(() => onNavegar && onNavegar(id), 2200);
+  }
+
+  function navegar(id) {
+    const frase = `Navegando para a tela ${NOMES_TELAS[id]}.`;
+    setMsgs((m) => [...m, { role: 'assistant', content: frase }]);
+    if (voz) falarTexto(frase);
+    irPara(id);
+  }
 
   // o próprio celular fala a resposta (grátis, sem servidor)
   function avisar(texto) {
@@ -94,6 +144,11 @@ export default function Assistente() {
       falarTexto(ultimaResposta(msgs)); // repete exatamente o que foi dito, sem perguntar de novo à IA
       return;
     }
+    const destinoLocal = destinoDe(texto);
+    if (destinoLocal) {
+      navegar(destinoLocal);
+      return;
+    }
     setCarregando(true);
     try {
       const r = await fetch(`${API}/ajuda`, {
@@ -102,8 +157,10 @@ export default function Assistente() {
         body: JSON.stringify({ mensagens: novas }),
       });
       const { texto: resposta, erro } = await r.json();
-      setMsgs([...novas, { role: 'assistant', content: resposta ?? erro ?? 'Sem resposta.' }]);
-      if (voz && resposta) falarTexto(resposta);
+      const { limpo, destino } = separarComando(resposta);
+      setMsgs([...novas, { role: 'assistant', content: (resposta ? limpo : null) ?? erro ?? 'Sem resposta.' }]);
+      if (voz && limpo) falarTexto(limpo);
+      if (destino) irPara(destino);
     } catch {
       setMsgs([...novas, { role: 'assistant', content: 'Não consegui responder agora.' }]);
     } finally {
@@ -172,8 +229,16 @@ export default function Assistente() {
         falarTexto(ultimaResposta(msgs));
         return;
       }
-      setMsgs([...msgs, ...(d.pergunta ? [{ role: 'user', content: d.pergunta }] : []), { role: 'assistant', content: d.texto }]);
-      if (voz) falarTexto(d.texto);
+      const destinoLocal = destinoDe(d.pergunta);
+      if (destinoLocal) {
+        setMsgs([...msgs, { role: 'user', content: d.pergunta }]);
+        navegar(destinoLocal);
+        return;
+      }
+      const { limpo, destino } = separarComando(d.texto);
+      setMsgs([...msgs, ...(d.pergunta ? [{ role: 'user', content: d.pergunta }] : []), { role: 'assistant', content: limpo || d.texto }]);
+      if (destino) irPara(destino);
+      if (voz) falarTexto(limpo || d.texto);
     } catch (e) {
       setMsgs([...msgs, { role: 'assistant', content: `Erro ao enviar o áudio: ${e?.message ?? e}` }]);
     } finally {
