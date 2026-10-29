@@ -89,6 +89,7 @@ export default function Assistente({ onNavegar }) {
   const inicio = useRef(0);
   const gravador = useAudioRecorder(GRAVACAO);
   const timerNav = useRef(null);
+  const rolagem = useRef(null);
 
   // se a pessoa sair da tela sozinha antes da navegação automática, cancela
   useEffect(() => () => clearTimeout(timerNav.current), []);
@@ -262,7 +263,7 @@ export default function Assistente({ onNavegar }) {
       </TouchableOpacity>
 
 
-      <ScrollView contentContainerStyle={s.pad}>
+      <ScrollView ref={rolagem} contentContainerStyle={s.pad} onContentSizeChange={() => rolagem.current?.scrollToEnd({ animated: true })}>
         <Balao role="assistant" onRepetir={() => falarTexto(SAUDACAO)}>{SAUDACAO}</Balao>
         {msgs.map((m, i) => (
           <Balao key={i} role={m.role} onRepetir={m.role === 'assistant' && !ehAviso(m.content) ? () => falarTexto(m.content) : undefined}>{m.content}</Balao>

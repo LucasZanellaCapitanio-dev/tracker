@@ -4,7 +4,7 @@ Protótipo (wireframe) de um aplicativo mobile para **localizar objetos pessoais
 
 O app foi pensado com **foco em acessibilidade**: botões grandes, textos em tamanho elevado, cores de alto contraste e um **assistente por voz** acessível direto da tela inicial.
 
-> ⚠️ Este projeto é um **wireframe navegável**. As tags exibidas são dados de exemplo e ainda não há comunicação real com dispositivos Bluetooth.
+> ⚠️ As tags exibidas são dados de exemplo. No Expo Go o Bluetooth real não está disponível, então o app roda em **modo demonstração**. O assistente de IA é real e usa um servidor próprio (veja abaixo).
 
 ## ✨ Funcionalidades
 
@@ -13,7 +13,8 @@ O app foi pensado com **foco em acessibilidade**: botões grandes, textos em tam
 - **Adicionar tag:** fluxo em duas etapas (escolher o aparelho e, em seguida, configurar a nova tag).
 - **Editar tag:** alteração do nome e do ícone de uma tag já cadastrada.
 - **Remover tag:** com tela de confirmação para evitar exclusões acidentais.
-- **Assistente por voz:** botão de destaque (robô) na tela inicial.
+- **Assistente por voz:** botão de destaque (robô) na tela inicial. Entende texto e voz, responde em texto e em voz alta (botão VOZ liga/desliga), repete a última resposta (botão REPETIR ou dizendo "repete") e **navega entre telas por pedido** ("quero ir para as configurações").
+- **Detalhes da tag:** botão com ícone de olho que mostra as informações completas, sem abreviações.
 - **Como usar:** tela com a descrição e instruções de uso do aplicativo.
 - **Configurações:** tela de ajustes do aplicativo.
 - **Indicador de páginas:** bolinhas e contador ("1 de 3") para indicar qual tag está sendo exibida.
@@ -32,19 +33,19 @@ O app foi pensado com **foco em acessibilidade**: botões grandes, textos em tam
 
 ## 🛠️ Tecnologias
 
-- [React Native](https://reactnative.dev/) `0.86.3`
-- [React](https://react.dev/) `19.2.3`
-- [Expo](https://expo.dev/) `57.0.30`
+- [React Native](https://reactnative.dev/) `0.88.0`
+- [React](https://react.dev/) `19.3.0`
+- [Expo](https://expo.dev/) `58` (SDK 58, Node 22.13 ou mais novo)
+- expo-audio (gravação de voz), expo-speech (voz da resposta), react-native-safe-area-context
 - [@expo/vector-icons](https://docs.expo.dev/guides/icons/) (MaterialCommunityIcons)
-- [react-native-ble-plx](https://github.com/dotintent/react-native-ble-plx) (plugin Bluetooth configurado no `app.json`, para uso futuro)
+- [react-native-ble-plx](https://github.com/dotintent/react-native-ble-plx) (só usado em build próprio; no Expo Go o app entra em modo demonstração)
 
 ## 📂 Estrutura do projeto
 
 ```
 .
 ├── App.js                  # Componente raiz: controla a navegação entre telas
-├── Inicio.js               # Tela inicial com o carrossel de tags
-├── app.json                # Configurações do Expo e permissões de Bluetooth
+├── app.json                # Configurações do Expo (permissão do microfone)
 ├── package.json            # Dependências e scripts
 └── src/
     ├── components/
@@ -52,13 +53,16 @@ O app foi pensado com **foco em acessibilidade**: botões grandes, textos em tam
     │   ├── Cartao.js       # Cartão base reutilizável
     │   └── Botao.js        # Botão reutilizável com variantes
     ├── screens/
+    │   ├── TelaInicio.js   # Tela inicial: carrossel de tags, TOCAR e detalhes
+    │   ├── DetalhesTag.js  # Janela com as informações completas da tag
     │   ├── Configuracoes.js
     │   ├── Descricao.js
-    │   ├── Assistente.js
+    │   ├── Assistente.js   # Chat por texto e voz (fala, repete e navega)
     │   ├── AdicionarTag.js
     │   ├── NovaTag.js
     │   ├── EditarTag.js
     │   └── ConfirmarRemocao.js
+    ├── bluetooth.js        # Varredura BLE (modo demonstração no Expo Go)
     └── theme.js            # Cores, raios de borda e fontes
 ```
 
@@ -94,7 +98,7 @@ npm start
    - **No celular:** escaneie o QR Code exibido no terminal com o Expo Go.
    - **No emulador:** pressione `a` (Android) ou `i` (iOS) no terminal.
 
-> 💡 O plugin `react-native-ble-plx` exige um *development build*, pois não funciona no Expo Go. Como o wireframe ainda não usa Bluetooth de verdade, a navegação funciona normalmente no Expo Go.
+> 💡 O módulo `react-native-ble-plx` exige um *development build*, pois não funciona no Expo Go. No Expo Go o app usa o **modo demonstração** do Bluetooth. Requer Node 22.13 ou mais novo (Expo SDK 58) e o Expo Go da mesma versão do SDK.
 
 ## 🧭 Fluxo de navegação
 
@@ -118,7 +122,8 @@ A navegação é controlada por **estado** no `App.js`, sem biblioteca de rotas.
 - As tags (`MALA VIAGEM`, `CHAVES`, `MOCHILA`) são **dados de exemplo** fixos no código.
 - Distância, bateria e status de conexão ainda são textos ilustrativos.
 - Ações de tocar, remover e salvar ainda não têm efeito real.
-- O Bluetooth está apenas configurado, sem implementação de varredura ou conexão.
+- O Bluetooth real só funciona em build próprio; no Expo Go usa-se o modo demonstração.
+- O servidor do assistente é gratuito e pode demorar cerca de 1 minuto na primeira pergunta.
 
 ## 🔮 Próximos passos
 
@@ -126,7 +131,7 @@ A navegação é controlada por **estado** no `App.js`, sem biblioteca de rotas.
 - [ ] Exibir distância e bateria reais.
 - [ ] Implementar o som do botão **TOCAR**.
 - [ ] Persistir as tags cadastradas (armazenamento local).
-- [ ] Implementar o reconhecimento de voz do assistente.
+- [x] Reconhecimento de voz e resposta falada do assistente (via servidor).
 - [ ] Tratar o estado sem tags ("Nenhum equipamento" e botão "Procurar rastreador").
 
 ## 👤 Autoria
@@ -135,3 +140,10 @@ Projeto desenvolvido como atividade acadêmica.
 
 - **Autor(a):** _seu nome aqui_
 - **Disciplina/Curso:** _preencha aqui_
+
+## 🤖 Servidor do assistente
+O app **não** guarda nenhuma chave de IA. Ele conversa com um servidor separado (repositório `tracker-servidor`, hospedado no Render), que usa a API da Groq (transcrição de voz + resposta em texto). O endereço fica na constante `API` em `src/screens/Assistente.js`. O servidor gratuito "dorme" após alguns minutos parado, então a primeira pergunta pode demorar cerca de 1 minuto.
+
+## 🔧 Ajustes rápidos
+- Tamanho do botão TOCAR: constantes no topo de `src/screens/TelaInicio.js`.
+- Altura da barra de navegação: `EXTRA_EMBAIXO` em `src/components/Navegacao.js`.
