@@ -6,9 +6,12 @@
     "start": "expo start"
   },
   "dependencies": {
-    "expo": "57.0.30",
-    "react": "19.2.3",
-    "react-native": "0.86.3"
+    "@expo/vector-icons": "^15.0.2",
+    "expo": "58.0.21",
+    "expo-audio": "~58.0.10",
+    "expo-speech": "~58.0.3",
+    "react": "19.3.0",
+    "react-native": "0.88.1"
   },
   "private": true
 }
