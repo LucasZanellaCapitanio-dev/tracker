@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Platform, StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Cabecalho, BarraNav } from './src/components/Navegacao';
-import Inicio from './Inicio';
+import Inicio from './src/screens/TelaInicio';
 import Configuracoes from './src/screens/Configuracoes';
 import Descricao from './src/screens/Descricao';
 import Assistente from './src/screens/Assistente';

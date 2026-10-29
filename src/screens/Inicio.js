@@ -1,9 +1,18 @@
 import React, { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import Cartao from '../components/Cartao';
-import Botao from '../components/Botao';
-import { cores, raio, fonte } from '../theme';
+import Cartao from './src/components/Cartao';
+import Botao from './src/components/Botao';
+import ConfirmarRemocao from './src/screens/ConfirmarRemocao';
+import DetalhesTag from './src/screens/DetalhesTag';
+import { cores, raio, fonte } from './src/theme';
+
+// ===== AJUSTE DO BOTÃO TOCAR (mexa só aqui; salve e recarregue o app) =====
+const TOCAR_ALTURA = 120;         // altura do botão TOCAR, em pixels. Maior número = botão mais alto
+const TOCAR_ESPACO_LATERAL = 8;   // espaço branco nas laterais. Menor número = botão mais largo
+const DETALHES_TAMANHO = 72;      // botão cinza do olho (largura e altura)
+const DETALHES_ESPACO = 12;       // espaço entre o TOCAR e o olho
+// ===========================================================================
 
 // Exemplos só para mostrar a rolagem horizontal.
 const TAGS = [
@@ -13,7 +22,7 @@ const TAGS = [
 ];
 
 // Sem equipamentos: mostrar "Nenhum equipamento" e botão "Procurar rastreador".
-function Tag({ item, largura, altura, onTocar }) {
+function Tag({ item, largura, altura, onTocar, onDetalhes }) {
   const nome = item.nome.toLowerCase();
   return (
     <View style={[s.tag, { width: largura, height: altura }]}>
@@ -22,16 +31,22 @@ function Tag({ item, largura, altura, onTocar }) {
           <MaterialCommunityIcons name={item.icone} size={60} color={cores.branco} />
         </View>
         <View style={s.info}>
-          <Text style={s.nome} numberOfLines={2}>{item.nome}</Text>
-          <Text style={s.suave}>Distância · Bateria</Text>
+          {/* uma linha só: se não couber, termina em "..." e o TOCAR não se deforma */}
+          <Text style={s.nome} numberOfLines={1} ellipsizeMode="tail">{item.nome}</Text>
+          <Text style={s.suave} numberOfLines={1} ellipsizeMode="tail">Distância · Bateria</Text>
           <View style={s.status}>
             <View style={s.ponto} />
-            <Text style={s.statusTexto}>Conectado</Text>
+            <Text style={s.statusTexto} numberOfLines={1}>Conectado</Text>
           </View>
         </View>
       </View>
       <View style={s.zonaTocar}>
-        <Botao titulo="TOCAR" tamanho="grande" onPress={onTocar} style={s.tocar} rotulo={`Tocar a tag ${nome}`} />
+        <View style={s.linhaTocar}>
+          <Botao titulo="TOCAR" tamanho="grande" onPress={onTocar} style={s.tocar} rotulo={`Tocar a tag ${nome}`} />
+          <TouchableOpacity style={s.detalhes} onPress={onDetalhes} accessibilityRole="button" accessibilityLabel={`Ver todos os detalhes da tag ${nome}`}>
+            <MaterialCommunityIcons name="eye" size={48} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -41,6 +56,8 @@ export default function Inicio({ onTocar, onRemover, onEditar, onAdicionar, onAs
   // Tamanho real da área da lista: cada página tem exatamente esse tamanho.
   const [medida, setMedida] = useState({ w: 0, h: 0 });
   const [indice, setIndice] = useState(0);
+  const [confirmando, setConfirmando] = useState(false);
+  const [detalhes, setDetalhes] = useState(false);
   const atual = TAGS[indice] || TAGS[0];
 
   return (
@@ -57,7 +74,7 @@ export default function Inicio({ onTocar, onRemover, onEditar, onAdicionar, onAs
               data={TAGS}
               keyExtractor={(t) => t.id}
               renderItem={({ item }) => (
-                <Tag item={item} largura={medida.w} altura={medida.h} onTocar={onTocar} />
+                <Tag item={item} largura={medida.w} altura={medida.h} onTocar={onTocar} onDetalhes={() => { setIndice(TAGS.findIndex((t) => t.id === item.id)); setDetalhes(true); }} />
               )}
               getItemLayout={(_, i) => ({ length: medida.w, offset: medida.w * i, index: i })}
               showsHorizontalScrollIndicator={false}
@@ -75,7 +92,7 @@ export default function Inicio({ onTocar, onRemover, onEditar, onAdicionar, onAs
           <Botao variante="escuro" onPress={() => onEditar && onEditar(atual)} style={s.circulo} rotulo={`Editar a tag ${atual.nome.toLowerCase()}`}>
             <MaterialCommunityIcons name="pencil" size={40} color={cores.branco} />
           </Botao>
-          <Botao variante="perigo" onPress={onRemover} style={s.circulo} rotulo={`Remover a tag ${atual.nome.toLowerCase()}`}>
+          <Botao variante="perigo" onPress={() => setConfirmando(true)} style={s.circulo} rotulo={`Remover a tag ${atual.nome.toLowerCase()}`}>
             <MaterialCommunityIcons name="trash-can-outline" size={40} color={cores.branco} />
           </Botao>
           <Botao variante="azul" onPress={onAdicionar} style={s.circulo} rotulo="Adicionar nova tag">
@@ -97,6 +114,15 @@ export default function Inicio({ onTocar, onRemover, onEditar, onAdicionar, onAs
           <MaterialCommunityIcons name="robot-happy-outline" size={92} color={cores.branco} />
         </TouchableOpacity>
       </View>
+
+      <DetalhesTag visivel={detalhes} item={atual} onFechar={() => setDetalhes(false)} />
+
+      <ConfirmarRemocao
+        visivel={confirmando}
+        nome={atual.nome.toLowerCase()}
+        onCancelar={() => setConfirmando(false)}
+        onConfirmar={() => { setConfirmando(false); onRemover && onRemover(atual); }}
+      />
     </View>
   );
 }
@@ -115,7 +141,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  info: { flex: 1, gap: 4 },
+  info: { flex: 1, minWidth: 0, gap: 4 },
   nome: { fontSize: 38, fontWeight: '800', color: cores.texto },
   suave: { fontSize: 24, fontWeight: '700', color: cores.escuro },
   status: {
@@ -125,14 +151,24 @@ const s = StyleSheet.create({
     gap: 8,
     backgroundColor: cores.amarelo,
     borderRadius: raio.pill,
-    paddingVertical: 6,
-    paddingHorizontal: 16,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
   },
-  ponto: { width: 16, height: 16, borderRadius: 8, backgroundColor: cores.escuro },
-  statusTexto: { fontSize: 24, fontWeight: '800', color: cores.texto },
-  // o TOCAR fica centralizado na área livre, com altura limitada
-  zonaTocar: { flex: 1, justifyContent: 'center', paddingVertical: 16 },
-  tocar: { alignSelf: 'stretch', flexGrow: 1, minHeight: 96, maxHeight: 220 },
+  ponto: { width: 12, height: 12, borderRadius: 6, backgroundColor: cores.escuro },
+  statusTexto: { fontSize: 18, fontWeight: '800', color: cores.texto },
+  // a zona ocupa o espaço livre e centraliza o TOCAR (altura fixa em TOCAR_ALTURA)
+  zonaTocar: { flex: 1, justifyContent: 'center', paddingHorizontal: TOCAR_ESPACO_LATERAL },
+  linhaTocar: { flexDirection: 'row', alignItems: 'center', gap: DETALHES_ESPACO },
+  tocar: { flex: 1, height: TOCAR_ALTURA, maxHeight: '100%' },
+  detalhes: {
+    width: DETALHES_TAMANHO,
+    height: DETALHES_TAMANHO,
+    borderRadius: raio.botao,
+    backgroundColor: cores.cinza,
+    alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   icones: { flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center', marginTop: 12 },
   circulo: { width: 80, height: 80, minHeight: 80, borderRadius: 40, paddingHorizontal: 0 },
   paginas: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 12 },

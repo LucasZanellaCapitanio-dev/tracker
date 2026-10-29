@@ -12,11 +12,36 @@ const GRAVACAO = { ...RecordingPresets.HIGH_QUALITY, sampleRate: 16000, numberOf
 const API = 'https://tracker-servidor.onrender.com';
 const SAUDACAO = 'Olá! Sou o assistente do Tracker. Como posso ajudar?';
 
-function Balao({ role, children }) {
+// Mensagens de aviso/erro não contam como "última resposta" para repetir.
+const ehAviso = (t) => /^(Erro|Sem permissão|Gravação muito curta|Falha|Não consegui|Seu celular não tem voz|O áudio ficou)/.test(t);
+
+// "repete", "repita", "de novo", "não entendi"... (só em frases curtas, para não confundir com perguntas)
+function pedeRepeticao(txt) {
+  const n = (txt || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z\s]/g, ' ').trim();
+  const palavras = n.split(/\s+/).filter(Boolean);
+  return palavras.length > 0 && palavras.length <= 6 && /\b(repet\w*|repita\w*|de novo|outra vez|nao entendi|nao ouvi)\b/.test(n);
+}
+
+function ultimaResposta(lista) {
+  for (let i = lista.length - 1; i >= 0; i--) {
+    if (lista[i].role === 'assistant' && !ehAviso(lista[i].content)) return lista[i].content;
+  }
+  return SAUDACAO;
+}
+
+function Balao({ role, children, onRepetir }) {
   const robo = role !== 'user';
   return (
     <View style={[s.balao, robo ? s.balaoRobo : s.balaoUsuario]}>
-      <MaterialCommunityIcons name={robo ? 'robot-happy-outline' : 'account'} size={48} color={cores.texto} />
+      <View style={s.balaoTopo}>
+        <MaterialCommunityIcons name={robo ? 'robot-happy-outline' : 'account'} size={48} color={cores.texto} />
+        {robo && onRepetir ? (
+          <TouchableOpacity style={s.repetirBalao} onPress={onRepetir} accessibilityRole="button" accessibilityLabel="Repetir esta resposta em voz alta">
+            <MaterialCommunityIcons name="volume-high" size={30} color={cores.texto} />
+            <Text style={s.repetirBalaoTexto}>REPETIR</Text>
+          </TouchableOpacity>
+        ) : null}
+      </View>
       <Text style={s.balaoTexto}>{children}</Text>
     </View>
   );
@@ -65,6 +90,10 @@ export default function Assistente() {
     const novas = [...msgs, { role: 'user', content: texto }];
     setMsgs(novas);
     setTexto('');
+    if (pedeRepeticao(texto)) {
+      falarTexto(ultimaResposta(msgs)); // repete exatamente o que foi dito, sem perguntar de novo à IA
+      return;
+    }
     setCarregando(true);
     try {
       const r = await fetch(`${API}/ajuda`, {
@@ -138,6 +167,11 @@ export default function Assistente() {
         setMsgs([...msgs, { role: 'assistant', content: d.erro ?? 'Sem resposta.' }]);
         return;
       }
+      if (pedeRepeticao(d.pergunta)) {
+        setMsgs([...msgs, { role: 'user', content: d.pergunta }]);
+        falarTexto(ultimaResposta(msgs));
+        return;
+      }
       setMsgs([...msgs, ...(d.pergunta ? [{ role: 'user', content: d.pergunta }] : []), { role: 'assistant', content: d.texto }]);
       if (voz) falarTexto(d.texto);
     } catch (e) {
@@ -162,10 +196,11 @@ export default function Assistente() {
         {voz && <View style={s.vozBolinha} />}
       </TouchableOpacity>
 
+
       <ScrollView contentContainerStyle={s.pad}>
-        <Balao role="assistant">{SAUDACAO}</Balao>
+        <Balao role="assistant" onRepetir={() => falarTexto(SAUDACAO)}>{SAUDACAO}</Balao>
         {msgs.map((m, i) => (
-          <Balao key={i} role={m.role}>{m.content}</Balao>
+          <Balao key={i} role={m.role} onRepetir={m.role === 'assistant' && !ehAviso(m.content) ? () => falarTexto(m.content) : undefined}>{m.content}</Balao>
         ))}
         {gravando ? <Balao role="assistant">Estou ouvindo... toque no microfone para enviar.</Balao> : null}
         {carregando ? <Balao role="assistant">Pensando...</Balao> : null}
@@ -200,6 +235,17 @@ export default function Assistente() {
 
 const s = StyleSheet.create({
   tela: { flex: 1, backgroundColor: cores.amarelo },
+  balaoTopo: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  repetirBalao: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    height: 48,
+    paddingHorizontal: 14,
+    borderRadius: raio.pill,
+    backgroundColor: cores.amarelo,
+  },
+  repetirBalaoTexto: { fontSize: 20, fontWeight: '800', color: cores.texto },
   voz: {
     alignSelf: 'center',
     width: 240,

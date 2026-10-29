@@ -4,6 +4,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Cartao from './src/components/Cartao';
 import Botao from './src/components/Botao';
 import ConfirmarRemocao from './src/screens/ConfirmarRemocao';
+import DetalhesTag from './src/screens/DetalhesTag';
 import { cores, raio, fonte } from './src/theme';
 
 // ===== AJUSTE DO BOTÃO TOCAR (mexa só aqui) =====
@@ -11,6 +12,8 @@ import { cores, raio, fonte } from './src/theme';
 const TOCAR_ESPACO_VERTICAL = 20;   // em cima e embaixo
 const TOCAR_ESPACO_HORIZONTAL = 30; // esquerda e direita
 const TOCAR_ALTURA_MINIMA = 30;     // o botão nunca fica menor que isso
+const DETALHES_TAMANHO = 72;        // botão cinza do olho (largura e altura)
+const DETALHES_ESPACO = 12;         // espaço entre o TOCAR e o olho
 // ================================================
 
 // Exemplos só para mostrar a rolagem horizontal.
@@ -21,7 +24,7 @@ const TAGS = [
 ];
 
 // Sem equipamentos: mostrar "Nenhum equipamento" e botão "Procurar rastreador".
-function Tag({ item, largura, altura, onTocar }) {
+function Tag({ item, largura, altura, onTocar, onDetalhes }) {
   const nome = item.nome.toLowerCase();
   return (
     <View style={[s.tag, { width: largura, height: altura }]}>
@@ -30,16 +33,22 @@ function Tag({ item, largura, altura, onTocar }) {
           <MaterialCommunityIcons name={item.icone} size={60} color={cores.branco} />
         </View>
         <View style={s.info}>
-          <Text style={s.nome} numberOfLines={2}>{item.nome}</Text>
-          <Text style={s.suave}>Distância · Bateria</Text>
+          {/* uma linha só: se não couber, termina em "..." e o TOCAR não se deforma */}
+          <Text style={s.nome} numberOfLines={1} ellipsizeMode="tail">{item.nome}</Text>
+          <Text style={s.suave} numberOfLines={1} ellipsizeMode="tail">Distância · Bateria</Text>
           <View style={s.status}>
             <View style={s.ponto} />
-            <Text style={s.statusTexto}>Conectado</Text>
+            <Text style={s.statusTexto} numberOfLines={1}>Conectado</Text>
           </View>
         </View>
       </View>
       <View style={s.zonaTocar}>
-        <Botao titulo="TOCAR" tamanho="grande" onPress={onTocar} style={s.tocar} rotulo={`Tocar a tag ${nome}`} />
+        <View style={s.linhaTocar}>
+          <Botao titulo="TOCAR" tamanho="grande" onPress={onTocar} style={s.tocar} rotulo={`Tocar a tag ${nome}`} />
+          <TouchableOpacity style={s.detalhes} onPress={onDetalhes} accessibilityRole="button" accessibilityLabel={`Ver todos os detalhes da tag ${nome}`}>
+            <MaterialCommunityIcons name="eye-outline" size={44} color={cores.texto} />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -50,6 +59,7 @@ export default function Inicio({ onTocar, onRemover, onEditar, onAdicionar, onAs
   const [medida, setMedida] = useState({ w: 0, h: 0 });
   const [indice, setIndice] = useState(0);
   const [confirmando, setConfirmando] = useState(false);
+  const [detalhes, setDetalhes] = useState(false);
   const atual = TAGS[indice] || TAGS[0];
 
   return (
@@ -66,7 +76,7 @@ export default function Inicio({ onTocar, onRemover, onEditar, onAdicionar, onAs
               data={TAGS}
               keyExtractor={(t) => t.id}
               renderItem={({ item }) => (
-                <Tag item={item} largura={medida.w} altura={medida.h} onTocar={onTocar} />
+                <Tag item={item} largura={medida.w} altura={medida.h} onTocar={onTocar} onDetalhes={() => { setIndice(TAGS.findIndex((t) => t.id === item.id)); setDetalhes(true); }} />
               )}
               getItemLayout={(_, i) => ({ length: medida.w, offset: medida.w * i, index: i })}
               showsHorizontalScrollIndicator={false}
@@ -107,6 +117,8 @@ export default function Inicio({ onTocar, onRemover, onEditar, onAdicionar, onAs
         </TouchableOpacity>
       </View>
 
+      <DetalhesTag visivel={detalhes} item={atual} onFechar={() => setDetalhes(false)} />
+
       <ConfirmarRemocao
         visivel={confirmando}
         nome={atual.nome.toLowerCase()}
@@ -131,7 +143,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  info: { flex: 1, gap: 4 },
+  info: { flex: 1, minWidth: 0, gap: 4 },
   nome: { fontSize: 38, fontWeight: '800', color: cores.texto },
   suave: { fontSize: 24, fontWeight: '700', color: cores.escuro },
   status: {
@@ -141,14 +153,23 @@ const s = StyleSheet.create({
     gap: 8,
     backgroundColor: cores.amarelo,
     borderRadius: raio.pill,
-    paddingVertical: 6,
-    paddingHorizontal: 16,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
   },
-  ponto: { width: 16, height: 16, borderRadius: 8, backgroundColor: cores.escuro },
-  statusTexto: { fontSize: 24, fontWeight: '800', color: cores.texto },
+  ponto: { width: 12, height: 12, borderRadius: 6, backgroundColor: cores.escuro },
+  statusTexto: { fontSize: 18, fontWeight: '800', color: cores.texto },
   // a zona ocupa o espaço livre; o botão preenche a zona (menos o espaço definido lá no topo)
   zonaTocar: { flex: 1, paddingVertical: TOCAR_ESPACO_VERTICAL, paddingHorizontal: TOCAR_ESPACO_HORIZONTAL },
+  linhaTocar: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: DETALHES_ESPACO },
   tocar: { flex: 1, minHeight: TOCAR_ALTURA_MINIMA },
+  detalhes: {
+    width: DETALHES_TAMANHO,
+    height: DETALHES_TAMANHO,
+    borderRadius: raio.botao,
+    backgroundColor: cores.cinza,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   icones: { flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center', marginTop: 12 },
   circulo: { width: 80, height: 80, minHeight: 80, borderRadius: 40, paddingHorizontal: 0 },
   paginas: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 12 },
