@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, Platform, StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Cabecalho, BarraNav } from './src/components/Navegacao';
@@ -10,7 +10,6 @@ import AdicionarTag from './src/screens/AdicionarTag';
 import NovaTag from './src/screens/NovaTag';
 import EditarTag from './src/screens/EditarTag';
 import { cores } from './src/theme';
-import { PreferenciasProvider, useLeituraVoz } from './src/preferencias';
 
 const TITULOS = {
   config: 'CONFIGURAÇÕES',
@@ -28,9 +27,7 @@ const VOLTAR = { assistente: 'inicio', adicionar: 'inicio', novaTag: 'adicionar'
 export default function App() {
   return (
     <SafeAreaProvider>
-      <PreferenciasProvider>
-        <Principal />
-      </PreferenciasProvider>
+      <Principal />
     </SafeAreaProvider>
   );
 }
@@ -40,14 +37,6 @@ function Principal() {
   const [aparelho, setAparelho] = useState({ id: null, nome: 'aparelho 1' });
   const [tags, setTags] = useState(TAGS_EXEMPLO);
   const [editando, setEditando] = useState({ nome: '', icone: 'briefcase-outline' });
-  const ler = useLeituraVoz();
-  const primeira = useRef(true);
-
-  // "LEITURA POR VOZ": fala o nome da tela quando ela muda (menos na abertura do app).
-  useEffect(() => {
-    if (primeira.current) { primeira.current = false; return; }
-    ler(TITULOS[tela].toLowerCase());
-  }, [tela, ler]);
 
   const esquerda = VOLTAR[tela]
     ? { icone: 'arrow-left', rotulo: 'Voltar', onPress: () => setTela(VOLTAR[tela]) }

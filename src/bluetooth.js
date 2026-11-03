@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Linking, PermissionsAndroid, Platform, Vibration } from 'react-native';
-import { usePreferencias, useLeituraVoz } from './preferencias';
-import { criarBip, prepararAudio } from './sinais';
+import { obterPreferencias } from './preferencias';
 
 // Quanto tempo cada busca dura antes de parar sozinha (economiza bateria). Só usado no iOS.
 const DURACAO_BUSCA_MS = 15000;
@@ -210,11 +209,6 @@ const mesmoId = (a, b) => String(a).toUpperCase() === String(b).toUpperCase();
 export function useToque() {
   const [tocandoId, setTocandoId] = useState(null);
   const sessao = useRef(null);
-  // Lê as opções de Configurações na hora de cada pulso (mudar durante o toque também vale).
-  const { config } = usePreferencias();
-  const opcoes = useRef(config);
-  opcoes.current = config;
-  const ler = useLeituraVoz();
 
   const parar = useCallback(() => {
     const s = sessao.current;
@@ -226,17 +220,12 @@ export function useToque() {
     clearTimeout(s.timer);
     clearTimeout(s.limite);
     clearInterval(s.leitor);
-    if (s.bip) s.bip.remover();
     try { s.ble.stopDeviceScan(); } catch (e) { /* já parado */ }
     s.ble.cancelDeviceConnection(s.deviceId).catch(() => { /* não estava conectado */ });
   }, []);
 
   const iniciar = useCallback(async (tag) => {
     parar();
-    if (!opcoes.current.vibracao && !opcoes.current.som) {
-      Alert.alert('Tocar', 'A vibração e o som estão desligados. Ligue um deles em Configurações para encontrar a tag.');
-      return;
-    }
     let ble;
     try {
       ble = obterGerenciador();
@@ -253,11 +242,9 @@ export function useToque() {
       return;
     }
 
-    const s = { ble, deviceId: tag.deviceId, ativo: true, amostras: [], ultima: 0, timer: null, limite: null, leitor: null, bip: null };
+    const s = { ble, deviceId: tag.deviceId, ativo: true, amostras: [], ultima: 0, timer: null, limite: null, leitor: null };
     sessao.current = s;
     setTocandoId(tag.id);
-    if (opcoes.current.som) prepararAudio();
-    ler(`Tocando ${String(tag.nome).toLowerCase()}`);
 
     // Guarda as últimas 3 leituras para o ritmo não oscilar a cada anúncio.
     const registrar = (rssi) => {
@@ -300,25 +287,22 @@ export function useToque() {
         return;
       }
       const rssi = s.amostras.reduce((a, b) => a + b, 0) / s.amostras.length;
-      if (opcoes.current.vibracao) Vibration.vibrate(PULSO_MS);
-      if (opcoes.current.som) {
-        if (!s.bip) s.bip = criarBip();
-        s.bip.tocar();
-      }
+      // Respeita o ajuste "VIBRAÇÃO DO RASTREADOR" das Configurações (lido a cada pulso).
+      if (obterPreferencias().vibracao) Vibration.vibrate(PULSO_MS);
       s.timer = setTimeout(ciclo, intervaloPorSinal(rssi));
     };
     ciclo();
-    s.limite = setTimeout(() => { parar(); ler('Toque encerrado'); }, TEMPO_MAXIMO_MS);
-  }, [parar, ler]);
+    s.limite = setTimeout(parar, TEMPO_MAXIMO_MS);
+  }, [parar]);
 
   const alternar = useCallback((tag) => {
     if (!tag.deviceId) {
       Alert.alert('Tocar', 'Esta tag é só um exemplo e não está ligada a nenhum aparelho. Adicione uma tag com o botão +.');
       return;
     }
-    if (sessao.current && sessao.current.deviceId === tag.deviceId) { parar(); ler('Toque parado'); }
+    if (sessao.current && sessao.current.deviceId === tag.deviceId) parar();
     else iniciar(tag);
-  }, [iniciar, parar, ler]);
+  }, [iniciar, parar]);
 
   // Ao sair da tela, para tudo (vibração, busca e conexão).
   useEffect(() => parar, [parar]);
