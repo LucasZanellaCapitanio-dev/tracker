@@ -4,6 +4,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAudioRecorder, RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync } from 'expo-audio';
 import * as Speech from 'expo-speech';
 import { cores, raio, fonte } from '../theme';
+import { usePreferencias } from '../preferencias';
 
 // Gravação em voz mono e mais leve (melhor para reconhecer fala)
 const GRAVACAO = { ...RecordingPresets.HIGH_QUALITY, sampleRate: 16000, numberOfChannels: 1, bitRate: 64000 };
@@ -84,7 +85,9 @@ export default function Assistente({ onNavegar }) {
   const [msgs, setMsgs] = useState([]);
   const [texto, setTexto] = useState('');
   const [carregando, setCarregando] = useState(false);
-  const [voz, setVoz] = useState(true);
+  // "RESPOSTA POR ÁUDIO" (Configurações) e o botão VOZ daqui são a mesma opção.
+  const { config, definir } = usePreferencias();
+  const voz = config.respostaAudio;
   const [gravando, setGravando] = useState(false);
   const inicio = useRef(0);
   const gravador = useAudioRecorder(GRAVACAO);
@@ -133,7 +136,7 @@ export default function Assistente({ onNavegar }) {
   // Liga/desliga a voz da IA. Desligando, para de falar na hora.
   function alternarVoz() {
     if (voz) Speech.stop();
-    setVoz(!voz);
+    definir('respostaAudio', !voz);
   }
 
   async function enviar() {

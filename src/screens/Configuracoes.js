@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, Switch, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, Text, ScrollView, Switch, Vibration, StyleSheet } from 'react-native';
 import Cartao from '../components/Cartao';
-import { cores, fonte } from '../theme';
+import { cores } from '../theme';
+import { usePreferencias } from '../preferencias';
+import { falar, pararVoz } from '../voz';
+import { criarBip, prepararAudio } from '../sinais';
 
 function Linha({ rotulo, ultima, valor, onChange }) {
   return (
@@ -20,19 +23,47 @@ function Linha({ rotulo, ultima, valor, onChange }) {
   );
 }
 
+// Cada opção: chave guardada em preferencias.js + texto exibido.
+const OPCOES = [
+  { chave: 'leituraVoz', rotulo: 'LEITURA POR VOZ' },
+  { chave: 'respostaAudio', rotulo: 'RESPOSTA POR ÁUDIO' },
+  { chave: 'vibracao', rotulo: 'VIBRAÇÃO DO RASTREADOR' },
+  { chave: 'som', rotulo: 'SOM DO RASTREADOR' },
+];
+
 export default function Configuracoes() {
-  const [leitura, setLeitura] = useState(true);
-  const [resposta, setResposta] = useState(false);
-  const [vibracao, setVibracao] = useState(false);
-  const [som, setSom] = useState(true);
+  const { config, definir } = usePreferencias();
+
+  // Salva a opção e dá um retorno na hora, para a pessoa perceber que funcionou.
+  function alterar(chave, valor) {
+    definir(chave, valor);
+    if (chave === 'leituraVoz') {
+      if (valor) falar('Leitura por voz ligada.'); else pararVoz();
+    } else if (chave === 'respostaAudio') {
+      if (valor) falar('Resposta por áudio ligada.'); else pararVoz();
+    } else if (chave === 'vibracao') {
+      if (valor) Vibration.vibrate(300); else Vibration.cancel();
+    } else if (chave === 'som' && valor) {
+      const bip = criarBip();
+      prepararAudio().then(() => {
+        bip.tocar();
+        setTimeout(() => bip.remover(), 1000);
+      });
+    }
+  }
 
   return (
     <ScrollView style={s.tela} contentContainerStyle={s.pad}>
       <Cartao style={s.grupo}>
-        <Linha rotulo="LEITURA POR VOZ" valor={leitura} onChange={setLeitura} />
-        <Linha rotulo="RESPOSTA POR ÁUDIO" valor={resposta} onChange={setResposta} />
-        <Linha rotulo="VIBRAÇÃO DO RASTREADOR" valor={vibracao} onChange={setVibracao} />
-        <Linha rotulo="SOM DO RASTREADOR" valor={som} onChange={setSom} ultima />
+        {OPCOES.map((o, i) => (
+          <Linha
+            key={o.chave}
+            rotulo={o.rotulo}
+            valor={config[o.chave]}
+            onChange={(v) => alterar(o.chave, v)}
+            ultima={i === OPCOES.length - 1}
+          />
+        ))}
       </Cartao>
     </ScrollView>
   );
