@@ -7,6 +7,7 @@ import Botao from '../components/Botao';
 import ConfirmarRemocao from './ConfirmarRemocao';
 import DetalhesTag from './DetalhesTag';
 import { cores, raio, fonte } from '../theme';
+import { useToque } from '../bluetooth';
 
 // ===== AJUSTE DO BOTÃO TOCAR (mexa só aqui; salve e recarregue o app) =====
 const TOCAR_ALTURA = 130;         // altura do botão TOCAR, em pixels. Maior número = botão mais alto
@@ -15,15 +16,16 @@ const DETALHES_TAMANHO = 72;      // botão cinza do olho (largura e altura)
 const DETALHES_ESPACO = 12;       // espaço entre o TOCAR e o olho
 // ===========================================================================
 
-// Exemplos só para mostrar a rolagem horizontal.
-const TAGS = [
+// Exemplos só para mostrar a rolagem horizontal (não têm deviceId, então o TOCAR não faz nada nelas).
+// As tags criadas pela tela "Adicionar tag" chegam pela prop `tags` e têm o deviceId do aparelho pareado.
+export const TAGS_EXEMPLO = [
   { id: '1', nome: 'MALA VIAGEM', icone: 'briefcase-outline' },
   { id: '2', nome: 'CHAVES', icone: 'key-outline' },
   { id: '3', nome: 'MOCHILA', icone: 'bag-personal-outline' },
 ];
 
 // Sem equipamentos: mostrar "Nenhum equipamento" e botão "Procurar rastreador".
-function Tag({ item, largura, altura, onTocar, onDetalhes }) {
+function Tag({ item, largura, altura, tocando, onTocar, onDetalhes }) {
   const nome = item.nome.toLowerCase();
   return (
     <View style={[s.tag, { width: largura, height: altura }]}>
@@ -43,7 +45,13 @@ function Tag({ item, largura, altura, onTocar, onDetalhes }) {
       </View>
       <View style={s.zonaTocar}>
         <View style={s.linhaTocar}>
-          <Botao titulo="TOCAR" tamanho="grande" onPress={onTocar} style={s.tocar} rotulo={`Tocar a tag ${nome}`} />
+          <Botao
+            titulo={tocando ? 'PARAR' : 'TOCAR'}
+            tamanho="grande"
+            onPress={onTocar}
+            style={s.tocar}
+            rotulo={tocando ? `Parar de tocar a tag ${nome}` : `Tocar a tag ${nome}`}
+          />
           <TouchableOpacity style={s.detalhes} onPress={onDetalhes} accessibilityRole="button" accessibilityLabel={`Ver todos os detalhes da tag ${nome}`}>
             <MaterialCommunityIcons name="eye" size={48} color="#FFFFFF" />
           </TouchableOpacity>
@@ -53,13 +61,14 @@ function Tag({ item, largura, altura, onTocar, onDetalhes }) {
   );
 }
 
-export default function Inicio({ onTocar, onRemover, onEditar, onAdicionar, onAssistente }) {
+export default function Inicio({ tags = TAGS_EXEMPLO, onTocar, onRemover, onEditar, onAdicionar, onAssistente }) {
   // Tamanho real da área da lista: cada página tem exatamente esse tamanho.
   const [medida, setMedida] = useState({ w: 0, h: 0 });
   const [indice, setIndice] = useState(0);
   const [confirmando, setConfirmando] = useState(false);
   const [detalhes, setDetalhes] = useState(false);
-  const atual = TAGS[indice] || TAGS[0];
+  const { tocandoId, alternar } = useToque();
+  const atual = tags[indice] || tags[0];
 
   return (
     <View style={s.tela}>
@@ -72,10 +81,11 @@ export default function Inicio({ onTocar, onRemover, onEditar, onAdicionar, onAs
             <FlatList
               style={{ width: medida.w, height: medida.h }}
               horizontal
-              data={TAGS}
+              data={tags}
+              extraData={tocandoId}
               keyExtractor={(t) => t.id}
               renderItem={({ item }) => (
-                <Tag item={item} largura={medida.w} altura={medida.h} onTocar={onTocar} onDetalhes={() => { setIndice(TAGS.findIndex((t) => t.id === item.id)); setDetalhes(true); }} />
+                <Tag item={item} largura={medida.w} altura={medida.h} tocando={tocandoId === item.id} onTocar={() => { onTocar && onTocar(item); alternar(item); }} onDetalhes={() => { setIndice(tags.findIndex((t) => t.id === item.id)); setDetalhes(true); }} />
               )}
               getItemLayout={(_, i) => ({ length: medida.w, offset: medida.w * i, index: i })}
               showsHorizontalScrollIndicator={false}
@@ -102,10 +112,10 @@ export default function Inicio({ onTocar, onRemover, onEditar, onAdicionar, onAs
         </View>
 
         <View style={s.paginas}>
-          {TAGS.map((t, i) => (
+          {tags.map((t, i) => (
             <View key={t.id} style={[s.bolinha, i === indice && s.bolinhaAtiva]} />
           ))}
-          <Text style={s.contagem}>{indice + 1} de {TAGS.length}</Text>
+          <Text style={s.contagem}>{indice + 1} de {tags.length}</Text>
         </View>
       </Cartao>
 

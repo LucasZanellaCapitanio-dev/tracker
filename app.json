@@ -5,7 +5,18 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "plugins": [
-      ["expo-audio", { "microphonePermission": "O app usa o microfone para você conversar com o assistente." }]
-    ]
+      ["expo-audio", { "microphonePermission": "O app usa o microfone para você conversar com o assistente." }],
+      ["react-native-ble-plx", { "bluetoothAlwaysPermission": "O app usa o Bluetooth para encontrar e tocar os seus rastreadores." }]
+    ],
+    "android": {
+      "permissions": [
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.BLUETOOTH_SCAN",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.VIBRATE"
+      ]
+    }
   }
 }

@@ -55,7 +55,7 @@ export default function AdicionarTag({ onEscolher }) {
         ) : (
           <View style={s.status}>
             {dispositivos.length === 0 ? (
-              <Text style={s.textoStatus} accessibilityLiveRegion="polite">Nenhum dispositivo encontrado.</Text>
+              <Text style={s.textoStatus} accessibilityLiveRegion="polite">Nenhum aparelho pareado encontrado. Pareie o aparelho nas configurações de Bluetooth do celular e toque em procurar novamente.</Text>
             ) : null}
             <Botao titulo="PROCURAR NOVAMENTE" variante="azul" tamanho="medio" onPress={procurar} style={s.botaoAviso} />
           </View>

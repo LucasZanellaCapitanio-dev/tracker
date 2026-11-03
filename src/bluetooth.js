@@ -1,8 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Linking, PermissionsAndroid, Platform } from 'react-native';
+import { Alert, Linking, PermissionsAndroid, Platform, Vibration } from 'react-native';
 
-// Quanto tempo cada busca dura antes de parar sozinha (economiza bateria).
+// Quanto tempo cada busca dura antes de parar sozinha (economiza bateria). Só usado no iOS.
 const DURACAO_BUSCA_MS = 15000;
+
+// ===== AJUSTE DA VIBRAÇÃO DO BOTÃO TOCAR =====
+const RSSI_FORTE = -45;        // sinal a partir daqui (dBm) = vibra no ritmo mais rápido
+const RSSI_FRACO = -100;       // sinal neste valor (dBm) ou pior = vibra no ritmo mais lento
+const INTERVALO_RAPIDO_MS = 250;  // sinal forte: uma vibração a cada 1/4 de segundo
+const INTERVALO_LENTO_MS = 2000;  // sinal fraco: uma vibração a cada 2 segundos
+const PULSO_MS = 100;          // duração de cada vibração (no iOS o sistema usa duração fixa)
+const SINAL_VALIDO_MS = 3000;  // sem nenhuma leitura por esse tempo = "sem sinal" (não vibra)
+const TEMPO_MAXIMO_MS = 120000; // o toque para sozinho depois de 2 minutos (economiza bateria)
+// =============================================
 
 // Modo demonstração: usado quando o módulo nativo não existe (Expo Snack / Expo Go).
 // Simula a busca com estes dispositivos de exemplo.
@@ -28,7 +38,10 @@ function obterGerenciador() {
 async function pedirPermissoes() {
   if (Platform.OS !== 'android') return true; // no iOS o sistema pergunta sozinho
   const P = PermissionsAndroid.PERMISSIONS;
-  const lista = Platform.Version >= 31 ? [P.BLUETOOTH_SCAN, P.BLUETOOTH_CONNECT] : [P.ACCESS_FINE_LOCATION];
+  // Android 12+: SCAN + CONNECT (CONNECT também é necessário para ler a lista de pareados).
+  // A localização continua na lista porque o Android só entrega os resultados da busca sem ela
+  // quando o manifesto declara "neverForLocation".
+  const lista = Platform.Version >= 31 ? [P.BLUETOOTH_SCAN, P.BLUETOOTH_CONNECT, P.ACCESS_FINE_LOCATION] : [P.ACCESS_FINE_LOCATION];
   const r = await PermissionsAndroid.requestMultiple(lista);
   return lista.every((p) => r[p] === PermissionsAndroid.RESULTS.GRANTED);
 }
@@ -41,7 +54,24 @@ function traduzirEstado(s) {
   return 'verificando'; // Unknown / Resetting
 }
 
-// Detecta se o Bluetooth está ligado e, estando, procura dispositivos próximos.
+// Lê os aparelhos JÁ PAREADOS com o celular (Android). O react-native-ble-plx não tem essa
+// função, por isso usamos o react-native-ble-manager só para isso.
+let bleManagerIniciado = false;
+async function listarPareados() {
+  const mod = require('react-native-ble-manager');
+  const BleManager = mod.default || mod;
+  if (!bleManagerIniciado) {
+    await BleManager.start({ showAlert: false });
+    bleManagerIniciado = true;
+  }
+  const lista = (await BleManager.getBondedPeripherals()) || [];
+  return lista.map((p) => ({
+    id: p.id,
+    nome: p.name || (p.advertising && p.advertising.localName) || 'Aparelho sem nome',
+  }));
+}
+
+// Detecta se o Bluetooth está ligado e, estando, lista os aparelhos pareados.
 export function useDispositivosBluetooth() {
   const [estado, setEstado] = useState('verificando');
   const [procurando, setProcurando] = useState(false);
@@ -75,6 +105,22 @@ export function useDispositivosBluetooth() {
     const m = ble.current;
     if (!m) return;
     if (!(await pedirPermissoes())) { setEstado('sem_permissao'); return; }
+
+    // Android: mostra os aparelhos que já estão pareados com o celular.
+    if (Platform.OS === 'android') {
+      setDispositivos([]);
+      setProcurando(true);
+      try {
+        setDispositivos(await listarPareados());
+      } catch (e) {
+        setEstado('indisponivel'); // módulo nativo ausente: falta instalar e refazer o build
+      } finally {
+        setProcurando(false);
+      }
+      return;
+    }
+
+    // iOS: o sistema não revela os aparelhos pareados, então continua a busca por anúncios.
     m.stopDeviceScan();
     clearTimeout(timer.current);
     mapa.current.clear();
@@ -144,4 +190,120 @@ export function useDispositivosBluetooth() {
   }, []);
 
   return { estado, procurando, dispositivos, demo, procurar, reverificar, ligar };
+}
+
+// Converte a força do sinal (RSSI, em dBm) no tempo entre vibrações:
+// sinal forte -> INTERVALO_RAPIDO_MS; sinal fraco -> INTERVALO_LENTO_MS (proporcional entre os dois).
+export function intervaloPorSinal(rssi) {
+  const t = Math.min(1, Math.max(0, (RSSI_FORTE - rssi) / (RSSI_FORTE - RSSI_FRACO)));
+  return Math.round(INTERVALO_RAPIDO_MS + t * (INTERVALO_LENTO_MS - INTERVALO_RAPIDO_MS));
+}
+
+const mesmoId = (a, b) => String(a).toUpperCase() === String(b).toUpperCase();
+
+// Botão TOCAR: faz o celular vibrar no ritmo da força do sinal do aparelho pareado.
+// Sem sinal = não vibra. A leitura do sinal vem de duas fontes ao mesmo tempo:
+//  1) os anúncios Bluetooth que o aparelho emite (busca contínua);
+//  2) a conexão com o aparelho, quando ele aceita (aparelhos já conectados não anunciam).
+export function useToque() {
+  const [tocandoId, setTocandoId] = useState(null);
+  const sessao = useRef(null);
+
+  const parar = useCallback(() => {
+    const s = sessao.current;
+    sessao.current = null;
+    Vibration.cancel();
+    setTocandoId(null);
+    if (!s) return;
+    s.ativo = false;
+    clearTimeout(s.timer);
+    clearTimeout(s.limite);
+    clearInterval(s.leitor);
+    try { s.ble.stopDeviceScan(); } catch (e) { /* já parado */ }
+    s.ble.cancelDeviceConnection(s.deviceId).catch(() => { /* não estava conectado */ });
+  }, []);
+
+  const iniciar = useCallback(async (tag) => {
+    parar();
+    let ble;
+    try {
+      ble = obterGerenciador();
+    } catch (e) {
+      Alert.alert('Tocar', 'Bluetooth indisponível aqui. Use um build de desenvolvimento (não o Expo Go).');
+      return;
+    }
+    if (!(await pedirPermissoes())) {
+      Alert.alert('Tocar', 'Permita o acesso ao Bluetooth para encontrar o aparelho.');
+      return;
+    }
+    if ((await ble.state()) !== 'PoweredOn') {
+      Alert.alert('Tocar', 'O Bluetooth está desligado. Ligue para tocar a tag.');
+      return;
+    }
+
+    const s = { ble, deviceId: tag.deviceId, ativo: true, amostras: [], ultima: 0, timer: null, limite: null, leitor: null };
+    sessao.current = s;
+    setTocandoId(tag.id);
+
+    // Guarda as últimas 3 leituras para o ritmo não oscilar a cada anúncio.
+    const registrar = (rssi) => {
+      s.amostras.push(rssi);
+      if (s.amostras.length > 3) s.amostras.shift();
+      s.ultima = Date.now();
+    };
+
+    // Fonte 1: anúncios do aparelho.
+    ble.startDeviceScan(null, { allowDuplicates: true, scanMode: 2 /* LowLatency */ }, (erro, d) => {
+      if (erro) {
+        if (sessao.current === s) {
+          parar();
+          Alert.alert('Tocar', 'Não foi possível medir o sinal. Confira se o Bluetooth e a localização do celular estão ligados.');
+        }
+        return;
+      }
+      if (d && d.rssi != null && mesmoId(d.id, s.deviceId)) registrar(d.rssi);
+    });
+
+    // Fonte 2: conexão com o aparelho e leitura do sinal da conexão.
+    ble.connectToDevice(s.deviceId, { timeout: 5000 })
+      .then(() => {
+        if (!s.ativo) { ble.cancelDeviceConnection(s.deviceId).catch(() => {}); return; }
+        s.leitor = setInterval(async () => {
+          try {
+            const d = await ble.readRSSIForDevice(s.deviceId);
+            if (s.ativo && d && d.rssi != null) registrar(d.rssi);
+          } catch (e) { /* a conexão caiu: volta a depender dos anúncios */ }
+        }, 400);
+      })
+      .catch(() => { /* não conectou: segue só com os anúncios */ });
+
+    // Laço da vibração: a cada volta lê o sinal mais recente e decide se vibra e quando vibra de novo.
+    const ciclo = () => {
+      if (!s.ativo) return;
+      if (Date.now() - s.ultima > SINAL_VALIDO_MS || s.amostras.length === 0) {
+        s.amostras = [];
+        s.timer = setTimeout(ciclo, 500); // sem sinal: não vibra, só continua escutando
+        return;
+      }
+      const rssi = s.amostras.reduce((a, b) => a + b, 0) / s.amostras.length;
+      Vibration.vibrate(PULSO_MS);
+      s.timer = setTimeout(ciclo, intervaloPorSinal(rssi));
+    };
+    ciclo();
+    s.limite = setTimeout(parar, TEMPO_MAXIMO_MS);
+  }, [parar]);
+
+  const alternar = useCallback((tag) => {
+    if (!tag.deviceId) {
+      Alert.alert('Tocar', 'Esta tag é só um exemplo e não está ligada a nenhum aparelho. Adicione uma tag com o botão +.');
+      return;
+    }
+    if (sessao.current && sessao.current.deviceId === tag.deviceId) parar();
+    else iniciar(tag);
+  }, [iniciar, parar]);
+
+  // Ao sair da tela, para tudo (vibração, busca e conexão).
+  useEffect(() => parar, [parar]);
+
+  return { tocandoId, alternar, parar };
 }

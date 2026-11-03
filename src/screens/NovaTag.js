@@ -61,7 +61,7 @@ export default function NovaTag({ aparelho = 'aparelho 1', nomeInicial = '', ico
         ) : null}
         <View style={s.divisor} />
 
-        <Botao titulo={textoBotao} variante="azul" tamanho="grande" onPress={onConfirmar} style={s.criar} />
+        <Botao titulo={textoBotao} variante="azul" tamanho="grande" onPress={() => onConfirmar && onConfirmar({ nome: nome.trim(), icone })} style={s.criar} />
       </Cartao>
     </ScrollView>
   );
