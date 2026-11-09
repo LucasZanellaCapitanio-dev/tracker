@@ -64,7 +64,7 @@ function Principal() {
         setTela('inicio');
       }}
     />
-  );
+  ); 
   else if (tela === 'editar') conteudo = <EditarTag tag={editando} onSalvar={() => setTela('inicio')} />;
   else conteudo = <Inicio tags={tags} onAdicionar={() => setTela('adicionar')} onEditar={(tag) => { setEditando(tag); setTela('editar'); }} onAssistente={() => setTela('assistente')} />;
 
