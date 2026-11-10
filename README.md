@@ -1,14 +1,14 @@
-# 📍 TRACKER – Rastreador Wireframe
+# TRACKER – Rastreador Wireframe
 
 Protótipo de um aplicativo mobile para **localizar objetos pessoais** (mala, chaves, mochila etc.) por meio de **tags rastreadoras Bluetooth**.
 
 O app foi pensado com **foco em acessibilidade** para pessoas com deficiência visual: botões grandes, textos em tamanho elevado, cores de alto contraste e um **assistente por voz** acessível direto da tela inicial.
 
-> ⚠️ **Atenção:** as tags exibidas são dados de exemplo. No Expo Go o Bluetooth real não está disponível, então o app roda em **modo demonstração**. O assistente de IA, porém, é real e usa um servidor próprio (veja [Servidor do assistente](#-servidor-do-assistente)).
+>  **Atenção:** as tags exibidas são dados de exemplo. No Expo Go o Bluetooth real não está disponível, então o app roda em **modo demonstração**. O assistente de IA, porém, é real e usa um servidor próprio (veja [Servidor do assistente](#-servidor-do-assistente)).
 
 ---
 
-## ✨ Funcionalidades
+## Funcionalidades
 
 - **Tela inicial (Tracker):** carrossel horizontal com as tags cadastradas, mostrando nome, ícone, distância, bateria e status de conexão.
 - **Botão TOCAR:** destinado a fazer a tag emitir som para ser encontrada.
@@ -27,7 +27,7 @@ O app foi pensado com **foco em acessibilidade** para pessoas com deficiência v
 
 ---
 
-## 📱 Telas
+## Telas
 
 | Tela | Título no app | Descrição |
 |------|---------------|-----------|
@@ -41,7 +41,7 @@ O app foi pensado com **foco em acessibilidade** para pessoas com deficiência v
 
 ---
 
-## 🛠️ Tecnologias
+## Tecnologias
 
 | Tecnologia | Versão | Uso |
 |------------|--------|-----|
@@ -56,7 +56,7 @@ O app foi pensado com **foco em acessibilidade** para pessoas com deficiência v
 
 ---
 
-## 📂 Estrutura do projeto
+## Estrutura do projeto
 
 ```text
 .
@@ -84,7 +84,7 @@ O app foi pensado com **foco em acessibilidade** para pessoas com deficiência v
 
 ---
 
-## 🤖 Servidor do assistente
+## Servidor do assistente
 
 O app **não guarda nenhuma chave de IA**. Ele conversa com um servidor separado (repositório `tracker-servidor`, hospedado no Render), que usa a API da Groq para transcrever a voz e gerar a resposta em texto. A resposta é falada pelo próprio celular.
 
@@ -97,7 +97,7 @@ Voz → servidor (Groq) → texto da resposta → celular fala em voz alta
 
 ---
 
-## 🚀 Como executar
+## Como executar
 
 ### Pré-requisitos
 
@@ -129,14 +129,14 @@ Voz → servidor (Groq) → texto da resposta → celular fala em voz alta
    - **No celular:** escaneie o QR Code exibido no terminal com o Expo Go.
    - **No emulador:** pressione `a` (Android) ou `i` (iOS) no terminal.
 
-> 💡 **Dicas**
+>  **Dicas**
 >
 > - Se o celular não encontrar o computador, use `npx expo start --tunnel`.
 > - O módulo `react-native-ble-plx` exige um *development build* e não funciona no Expo Go. Por isso o app usa o **modo demonstração** do Bluetooth.
 
 ---
 
-## 🧭 Fluxo de navegação
+## Fluxo de navegação
 
 A navegação é controlada por **estado** no `App.js`, sem biblioteca de rotas.
 
@@ -148,7 +148,7 @@ A navegação é controlada por **estado** no `App.js`, sem biblioteca de rotas.
 
 ---
 
-## ♿ Acessibilidade
+## Acessibilidade
 
 - Botões grandes e com área de toque ampliada.
 - Textos grandes e em negrito.
@@ -158,7 +158,7 @@ A navegação é controlada por **estado** no `App.js`, sem biblioteca de rotas.
 
 ---
 
-## 🔧 Ajustes rápidos
+## Ajustes rápidos
 
 | O que ajustar | Onde |
 |---------------|------|
@@ -168,7 +168,7 @@ A navegação é controlada por **estado** no `App.js`, sem biblioteca de rotas.
 
 ---
 
-## ⚠️ Limitações atuais
+## Limitações atuais
 
 - As tags (`MALA VIAGEM`, `CHAVES`, `MOCHILA`) são **dados de exemplo** fixos no código.
 - Distância, bateria e status de conexão ainda são textos ilustrativos.
@@ -178,7 +178,7 @@ A navegação é controlada por **estado** no `App.js`, sem biblioteca de rotas.
 
 ---
 
-## 🔮 Próximos passos
+## Próximos passos
 
 - [x] Reconhecimento de voz e resposta falada do assistente (via servidor).
 - [ ] Integrar o Bluetooth (`react-native-ble-plx`) para buscar e conectar às tags.
@@ -189,9 +189,23 @@ A navegação é controlada por **estado** no `App.js`, sem biblioteca de rotas.
 
 ---
 
-## 👤 Autoria
+## Histórico de desenvolvimento
+
+O projeto foi construído ao longo de cinco períodos:
+
+| Período | O que foi feito |
+|---------|-----------------|
+| **1º** | Definição do tema e inicialização do wireframe. |
+| **2º** | Uso de comando de terminal para garantir que todos usem as mesmas versões do Expo; inserção da primeira versão da IA no app; retrocesso do app. |
+| **3º** | Ajustes do layout e do wireframe; acessibilidade na parte estética; início de algumas funções, principalmente a parte do Bluetooth; criação do README. |
+| **4º** | Configurações do assistente ajustadas; correção da IA e melhoria das suas funções. |
+| **5º** | Mais atualizações do app, como ajuste no Bluetooth; novas funcionalidades no app em geral; correção de erros gerais. |
+
+---
+
+## Autoria
 
 Projeto desenvolvido como atividade acadêmica.
 
-- **Autor(a):** _seu nome aqui_
-- **Disciplina/Curso:** _preencha aqui_
+- **Autor(a):** Bernardo José de Mello Azevedo, Lucas Zanella Capitanio, Amanda Gabrieli Ferrão, Lorenzo Scandolara dos Santos, Luane Rafaela Mirando de Souza, Juan Luca da Rosa Schacker, Nicolas André Levinski Rios, Marcos Virgilio da Costa, Lara Popov, Paulo José Furtado, Jackson Dantas.
+- **Disciplina/Curso:** Tópicos especias, programação e Oficina de integração
