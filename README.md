@@ -346,7 +346,58 @@ Quando a bateria mostrada no aplicativo estiver baixa, ou quando a tag começar 
 
 ##### VOZ E ACESSIBILIDADE!!!!
 
+## Como eu ligo ou desligo a voz do assistente?
 
+Na tela do Assistente, use o botão VOZ. Ele liga e desliga a resposta falada. As respostas continuam aparecendo em texto.
+
+## Como eu faço o assistente repetir a resposta?
+
+Aperte o botão REPETIR ou diga (ou escreva) "repete".
+
+## Como eu falo com o assistente?
+
+Abra o Assistente pela tela inicial. Você pode digitar ou gravar sua voz com o botão do microfone. O assistente responde em texto e fala a resposta em voz alta. Na primeira vez, o aplicativo pede permissão para usar o microfone.
+
+## Por que o assistente não está me ouvindo?
+
+Confira se você permitiu o uso do microfone nas configurações do celular.
+Fale perto do aparelho e em um lugar silencioso.
+Verifique se há internet, pois a voz é transcrita em um servidor.
+Se não funcionar, escreva a mensagem em texto.
+
+## Como aumento o tamanho das letras?
+
+O aplicativo já usa letras grandes e em negrito. Para aumentar ainda mais, ajuste o tamanho da fonte nas configurações de acessibilidade do celular.
+
+## O aplicativo lê a tela em voz alta?
+
+O aplicativo não tem um leitor de tela próprio, mas os botões têm rótulos de acessibilidade (por exemplo, "Tocar a tag chaves"). Por isso funciona com os leitores do celular, o TalkBack no Android e o VoiceOver no iPhone. O assistente também fala as próprias respostas em voz alta.
+
+### Navegar pelo app (pedidos)!
+
+## Quero ir para as configurações.
+
+O assistente leva você para a tela de Configurações.
+
+## Abrir a tela inicial.
+
+O assistente leva você para a tela inicial (Tracker), com o carrossel de tags.
+
+## Me leve para "Como usar".
+
+O assistente abre a tela Como usar, com a descrição e as instruções do aplicativo.
+
+## Quero adicionar uma nova tag.
+
+O assistente abre a tela Adicionar tag, onde você escolhe o aparelho e depois configura a tag.
+
+## Voltar.
+
+Use a seta de voltar no canto do cabeçalho, que aparece nas telas Assistente, Adicionar tag, Nova tag e Editar tag. Você também pode pedir ao assistente para ir à tela inicial.
+
+## Quero que toque a tag do (OBJETO X).
+
+O assistente leva você até a tela inicial. Lá, escolha a tag do objeto pedido (por exemplo, chaves) e aperte o botão TOCAR.
 
 ---
 
