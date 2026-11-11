@@ -403,8 +403,56 @@ O assistente leva você até a tela inicial. Lá, escolha a tag do objeto pedido
 
 ##### REPETIR RESPOSTA E PROBLEMAS COMUNS!!!!
 
+### Repetir a resposta!
 
+# Repete.
 
+O assistente repete a última resposta. O botão REPETIR faz o mesmo.
+
+# Pode repetir, por favor?
+
+Claro. O assistente repete a última resposta, em texto e em voz alta (se o botão VOZ estiver ligado).
+
+# Não entendi.
+
+Sem problema. O assistente repete a última resposta, e você pode pedir também uma explicação mais simples ou mais curta.
+
+# De novo.
+
+O assistente repete a última resposta. Se quiser, peça "mais devagar" ou "com outras palavras".
+
+### Problemas comuns! 
+
+## O assistente demora para responder. Por quê?
+
+O servidor do assistente é gratuito e "dorme" depois de alguns minutos sem uso. Por isso, a primeira pergunta pode demorar cerca de 1 minuto. Depois que ele acorda, as respostas ficam mais rápidas. Para acordá-lo antes, abra o endereço do servidor no navegador.
+
+## Deu erro ao gravar minha voz.
+
+Permita o uso do microfone para o aplicativo nas configurações do celular.
+Feche outros aplicativos que estejam usando o microfone.
+Tente gravar de novo.
+Se continuar o erro, digite a mensagem.
+
+## Não ouço a resposta do assistente.
+
+Confira se o botão VOZ está ligado.
+Aumente o volume do celular e tire o modo silencioso.
+Se não funcionar, leia a resposta em texto na tela ou use o botão REPETIR.
+
+## A tag não toca. O que eu faço?
+
+Confira se o Bluetooth do celular está ligado e se o aplicativo tem permissão.
+Aproxime-se da tag e veja se ela está conectada (ícone de olho).
+Verifique a bateria da tag.
+Lembre que o som do botão TOCAR ainda está em desenvolvimento, e que o Bluetooth real só funciona em build próprio, não no Expo Go.
+
+## O aplicativo travou. O que eu faço?
+
+Feche o aplicativo e abra de novo. Se estiver testando com o Expo Go, reinicie com npx expo start -c. As tags cadastradas ainda não são salvas, então depois de reiniciar o app volta às tags de exemplo.
+
+---
+---
 ---
 
 ## Autoria
