@@ -203,9 +203,43 @@ O projeto foi construído ao longo de cinco períodos:
 
 ---
 
+## O que é o Tracker?
+
+O Tracker é um aplicativo de celular que ajuda você a encontrar seus objetos pessoais, como mala, chaves e mochila. Ele funciona junto com tags rastreadoras Bluetooth, pequenos aparelhos que ficam presos aos seus objetos. É um protótipo feito como atividade acadêmica.
+
+## Para que serve este aplicativo?
+
+Serve para localizar objetos perdidos. Você cadastra uma tag para cada objeto e, quando precisar achá-lo, usa o aplicativo para fazer a tag tocar e para ver informações sobre ela.
+
+## O que eu consigo fazer aqui?
+
+Ver suas tags em um carrossel, com nome, ícone, distância, bateria e status de conexão.
+Usar o botão TOCAR para a tag emitir som.
+Ver os detalhes completos de uma tag pelo botão com ícone de olho.
+Adicionar, editar e remover tags.
+Conversar com o assistente por voz ou texto, ouvir as respostas e pedir para ele levar você a outras telas.
+Consultar a tela "Como usar" e a tela de "Configurações".
+
+## O aplicativo funciona para pessoas cegas ou com baixa visão?
+
+Sim, ele foi pensado para isso. Tem botões grandes, textos grandes e em negrito, cores de alto contraste (amarelo, preto, vermelho e azul), rótulos de acessibilidade nos botões, como "Tocar a tag chaves", e um assistente que entende voz e responde falando.
+
+## Preciso de internet para usar?
+
+Depende do que você quer fazer. O assistente precisa de internet, porque ele conversa com um servidor que transcreve a sua voz e gera a resposta. O Bluetooth, usado para falar com as tags, não depende de internet.
+
+## O aplicativo é gratuito?
+
+Este é um projeto acadêmico e não há cobrança prevista no código. O servidor do assistente usa uma hospedagem gratuita, e por isso a primeira pergunta pode demorar.
+
+
+
+
+---
 ## Autoria
 
 Projeto desenvolvido como atividade acadêmica.
 
 - **Autor(a):** Bernardo José de Mello Azevedo, Lucas Zanella Capitanio, Amanda Gabrieli Ferrão, Lorenzo Scandolara dos Santos, Luane Rafaela Mirando de Souza, Juan Luca da Rosa Schacker, Nicolas André Levinski Rios, Marcos Virgilio da Costa, Lara Popov, Paulo José Furtado, Jackson Dantas.
 - **Disciplina/Curso:** Tópicos especias, programação e Oficina de integração
+
