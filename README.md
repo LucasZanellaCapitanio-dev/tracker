@@ -6,6 +6,22 @@ O app foi pensado com **foco em acessibilidade** para pessoas com deficiência v
 
 >  **Atenção:** as tags exibidas são dados de exemplo. No Expo Go o Bluetooth real não está disponível, então o app roda em **modo demonstração**. O assistente de IA, porém, é real e usa um servidor próprio (veja [Servidor do assistente](#-servidor-do-assistente)).
 
+
+##### Glossário!!!!
+
+| Termo | Significado |
+|-------|-------------|
+| **Tag rastreadora** | Aparelho pequeno com Bluetooth, preso ou guardado em um objeto para ajudar a achá-lo |
+| **Bluetooth (BLE)** | Tecnologia sem fio de curto alcance e baixo consumo de bateria, usada para falar com a tag |
+| **Pareamento** | Ligação entre o celular e a tag, feita ao adicionar a tag |
+| **TOCAR** | Botão que faz a tag emitir som |
+| **Assistente** | Chat por voz e texto que responde dúvidas e leva você a outras telas |
+| **Expo Go** | Aplicativo para testar o projeto no celular sem instalar um build próprio |
+| **Development build** | Versão do app instalada no celular, com módulos nativos como o Bluetooth |
+| **Modo demonstração** | Funcionamento com dados de exemplo, usado quando o Bluetooth real não está disponível |
+| **Servidor do assistente** | Programa separado que recebe a pergunta, consulta a IA e devolve a resposta |
+| **TalkBack / VoiceOver** | Leitores de tela do Android e do iPhone |
+
 ---
 
 ## Funcionalidades
@@ -203,6 +219,80 @@ O projeto foi construído ao longo de cinco períodos:
 
 ---
 
+## Status do projeto
+
+🚧 **Protótipo acadêmico em desenvolvimento** (versão `1.0.0`).
+
+| Item | Situação |
+|------|----------|
+| Interface e navegação | ✅ Funcionando |
+| Assistente por texto e voz | ✅ Funcionando (precisa de internet) |
+| Cadastro de tags na sessão atual | ✅ Funcionando |
+| Bluetooth real | 🔧 Em desenvolvimento (só em build próprio) |
+| Som do botão TOCAR | 🔧 Em desenvolvimento |
+| Salvar tags no celular | ⏳ Planejado |
+
+> Por ser um protótipo, **não use o aplicativo como único meio** de localizar objetos importantes.
+
+## Guia rápido para o usuário
+
+1. **Abra o aplicativo.** Você chega à tela **TRACKER**, onde ficam as suas tags.
+2. **Passe de uma tag para outra** deslizando o carrossel. O contador (por exemplo, "1 de 3") mostra qual tag está na tela.
+3. **Para achar um objeto**, escolha a tag dele e aperte **TOCAR**. Siga o som e acompanhe a distância.
+4. **Para ver tudo sobre a tag**, aperte o botão com o **ícone de olho**: nome, distância, bateria e conexão, sem abreviações.
+5. **Para cadastrar um objeto novo**, aperte adicionar, escolha o aparelho, dê um nome e escolha um ícone.
+6. **Ficou com dúvida?** Abra o **Assistente** e fale ou escreva. Ele responde em voz alta, repete quando você pedir e leva você a outras telas.
+7. **Quer rever as instruções?** Use **COMO USAR** na barra de baixo.
+
+## Dicas para usar com leitor de tela
+
+Os botões do aplicativo têm rótulos de acessibilidade (por exemplo, "Tocar a tag chaves"), então funcionam com o leitor de tela do celular.
+
+- **Android:** ative o **TalkBack** em *Configurações > Acessibilidade*.
+- **iPhone:** ative o **VoiceOver** em *Ajustes > Acessibilidade*.
+- Com o leitor ligado, **toque uma vez** para ouvir o botão e **toque duas vezes** para ativá-lo.
+- O assistente fala as próprias respostas. Se o leitor de tela e a voz do assistente falarem ao mesmo tempo, desligue a voz do assistente no botão **VOZ**.
+- Para letras ainda maiores, ajuste o tamanho da fonte nas configurações de acessibilidade do celular.
+
+## Permissões do aplicativo
+
+Declaradas no `app.json`.
+
+| Permissão | Plataforma | Para que serve |
+|-----------|------------|----------------|
+| Microfone | Android e iOS | Gravar a sua voz para conversar com o assistente |
+| `BLUETOOTH`, `BLUETOOTH_ADMIN`, `BLUETOOTH_SCAN`, `BLUETOOTH_CONNECT` | Android | Encontrar, conectar e tocar as tags |
+| `ACCESS_FINE_LOCATION` | Android | Exigida pelo Android para a varredura Bluetooth; o app não usa a sua localização para outro fim |
+| `VIBRATE` | Android | Respostas por vibração |
+| Bluetooth sempre ativo (`bluetoothAlwaysPermission`) | iOS | Encontrar e tocar os seus rastreadores |
+
+Se você negar uma permissão sem querer, ative-a de novo nas configurações do celular, na página do aplicativo.
+
+## Privacidade e dados
+
+- O aplicativo **não guarda nenhuma chave de IA**; ela fica somente no servidor.
+- No **assistente**, a sua voz ou texto é enviado ao servidor do projeto (`tracker-servidor`), que usa a API da Groq para transcrever e responder. Evite falar dados pessoais sensíveis.
+- O **Bluetooth** é usado só para falar com as tags e funciona sem internet.
+- As **tags cadastradas ainda não são salvas** no celular: ao fechar o app, a lista volta aos dados de exemplo.
+- O aplicativo **não exige login nem cadastro**.
+- A localização é pedida apenas porque o Android exige essa permissão para procurar aparelhos Bluetooth.
+
+## Compatibilidade
+
+| Item | Situação |
+|------|----------|
+| Android com Expo Go | Funciona em modo demonstração |
+| Android com build próprio | Bluetooth real (em teste) |
+| iOS com Expo Go | Funciona em modo demonstração |
+| iOS com build próprio | Exige conta de desenvolvedor da Apple |
+| Emuladores | Interface e assistente funcionam; o Bluetooth real normalmente não |
+| Leitores de tela (TalkBack e VoiceOver) | Suportados por meio dos rótulos de acessibilidade |
+| Orientação | Somente retrato |
+| Tags | Aparelhos com Bluetooth de baixo consumo (BLE) |
+
+---
+
+
 ###### SOBRE O APLICATIVO!!!!
 
 ## O que é o Tracker?
@@ -341,6 +431,39 @@ Depende do modelo da tag e do ambiente. Paredes e objetos grandes reduzem o alca
 ## Quando devo trocar a bateria da tag?
 
 Quando a bateria mostrada no aplicativo estiver baixa, ou quando a tag começar a perder conexão com frequência estando perto. Siga as instruções do fabricante da tag para a troca.
+
+### Como testar o Bluetooth real!
+
+O Expo Go não carrega módulos nativos como o `react-native-ble-plx`. Para testar com tags de verdade, use um *development build*.
+
+### Pré-requisitos
+
+- Celular **Android** com depuração USB ativada.
+- Android Studio instalado (SDK e `adb`).
+- Uma tag Bluetooth de teste.
+
+### Passo a passo
+
+1. Instale o cliente de desenvolvimento:
+
+   ```bash
+   npx expo install expo-dev-client
+   ```
+
+2. Gere e instale o app no celular conectado por USB:
+
+   ```bash
+   npx expo run:android
+   ```
+
+3. Quando o app abrir, conceda as permissões de **Bluetooth** e **localização**.
+4. Nas próximas vezes, basta rodar:
+
+   ```bash
+   npx expo start --dev-client
+   ```
+
+> Alternativa sem Android Studio: o **EAS Build** (`eas build --profile development --platform android`).
 
 ---
 
