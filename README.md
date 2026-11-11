@@ -203,6 +203,8 @@ O projeto foi construído ao longo de cinco períodos:
 
 ---
 
+###### SOBRE O APLICATIVO!!!!
+
 ## O que é o Tracker?
 
 O Tracker é um aplicativo de celular que ajuda você a encontrar seus objetos pessoais, como mala, chaves e mochila. Ele funciona junto com tags rastreadoras Bluetooth, pequenos aparelhos que ficam presos aos seus objetos. É um protótipo feito como atividade acadêmica.
@@ -232,10 +234,72 @@ Depende do que você quer fazer. O assistente precisa de internet, porque ele co
 
 Este é um projeto acadêmico e não há cobrança prevista no código. O servidor do assistente usa uma hospedagem gratuita, e por isso a primeira pergunta pode demorar.
 
+---
+
+###### SOBRE AS TAGS!!!!
+
+## O que é uma tag rastreadora?
+
+É um aparelho pequeno com Bluetooth que você prende ou guarda dentro de um objeto, como chaves, mala ou mochila. O aplicativo se comunica com ela para mostrar a que distância está e para fazê-la tocar.
+
+## Como eu uso a tag?
+
+Prenda a tag ao objeto.
+Cadastre a tag no aplicativo (tela Adicionar tag).
+Quando precisar do objeto, abra a tela inicial, escolha a tag dele e toque em TOCAR.
+
+## Como faço para encontrar minhas chaves?
+
+Abra a tela inicial e passe pelas tags até chegar à tag das chaves. Aperte o botão TOCAR e siga o som. A distância mostrada na tag também ajuda a saber se você está chegando perto. Se preferir, peça ao assistente para levar você à tela inicial.
+
+## O que o botão TOCAR faz?
+
+Ele serve para fazer a tag emitir som, para que você a encontre pelo barulho. Nesta versão de demonstração o som ainda não está completo. O aplicativo já guarda o aparelho pareado de cada tag e usa isso para medir o sinal.
+
+## O que significa o botão com o ícone de olho?
+
+Ele abre uma janela com as informações completas da tag, sem abreviações: nome, distância, bateria e status de conexão.
+
+## Como eu sei se a tag está conectada?
+
+O status de conexão aparece no cartão da tag, na tela inicial, e também na janela de detalhes (botão do olho).
+
+## O que significa a distância que aparece na tag?
+
+É a distância aproximada entre o seu celular e a tag. Ela serve de guia: quanto menor o número, mais perto você está do objeto. Nesta versão de demonstração, o valor ainda é ilustrativo.
+
+## Como eu vejo a bateria da minha tag?
+
+A bateria aparece no cartão da tag e na janela de detalhes (botão do olho). Nesta versão, o valor é um texto ilustrativo.
+
+## Como passo para a próxima tag?
+
+Deslize o carrossel para o lado. As bolinhas e o contador (por exemplo, "1 de 3") mostram qual tag está na tela e quantas existem.
+
+## Quantas tags eu posso cadastrar?
+
+O aplicativo não define um limite fixo. Você pode adicionar uma tag para cada objeto. Nesta versão, as tags cadastradas não ficam salvas ao fechar o aplicativo.
+
+---
+
+##### BLUETOOTH!!!!
 
 
 
 ---
+
+##### VOZ E ACESSIBILIDADE!!!!
+
+
+
+---
+
+##### REPETIR RESPOSTA E PROBLEMAS COMUNS!!!!
+
+
+
+---
+
 ## Autoria
 
 Projeto desenvolvido como atividade acadêmica.
