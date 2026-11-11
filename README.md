@@ -460,5 +460,9 @@ Feche o aplicativo e abra de novo. Se estiver testando com o Expo Go, reinicie c
 Projeto desenvolvido como atividade acadêmica.
 
 - **Autor(a):** Bernardo José de Mello Azevedo, Lucas Zanella Capitanio, Amanda Gabrieli Ferrão, Lorenzo Scandolara dos Santos, Luane Rafaela Mirando de Souza, Juan Luca da Rosa Schacker, Nicolas André Levinski Rios, Marcos Virgilio da Costa, Lara Popov, Paulo José Furtado, Jackson Dantas.
-- **Disciplina/Curso:** Tópicos especias, programação e Oficina de integração
 
+- **Instituição:** Instituto Federal de Santa Catarina, Campus Chapecó.
+
+- **Ano/Semestre:** Sétimo Semestre do Curso Técnico em Desenvolvimento de Sistemas Integrado com o Ensino Médio.
+
+- **Disciplina/Curso:** Tópicos especias, programação e Oficina de integração.
