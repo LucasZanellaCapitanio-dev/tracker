@@ -284,7 +284,63 @@ O aplicativo não define um limite fixo. Você pode adicionar uma tag para cada 
 
 ##### BLUETOOTH!!!!
 
+### Adicionar, editar e remover!
 
+## Como adiciono uma nova tag?
+
+Na tela inicial, toque em adicionar (ou peça ao assistente: "quero adicionar uma nova tag").
+Na tela Adicionar tag, escolha o aparelho encontrado.
+Na tela Nova tag, defina o nome e o ícone e confirme.
+Você volta para a tela inicial, e a nova tag aparece no carrossel.
+
+## Como coloco a tag na minha mochila?
+
+Fisicamente, guarde a tag dentro da mochila ou prenda-a em um bolso ou zíper. No aplicativo, adicione a tag e dê a ela o nome "mochila", escolhendo um ícone que combine. Assim você a reconhece no carrossel.
+
+## Como mudo o nome de uma tag?
+
+Na tela inicial, escolha a tag e use a opção de editar. Na tela Editar tag, altere o nome e salve.
+
+## Como troco o ícone da tag?
+
+É no mesmo lugar: na tela Editar tag, escolha outro ícone e salve.
+
+## Como removo uma tag?
+
+Na tela inicial, escolha a tag e use a opção de remover. O aplicativo mostra uma tela de confirmação, para evitar exclusões acidentais.
+
+## Eu removi uma tag sem querer. E agora?
+
+Adicione a tag novamente pelo fluxo de Adicionar tag, com o mesmo nome e ícone. A tag física não é afetada e continua funcionando.
+
+## Posso usar a mesma tag em outro objeto?
+
+Sim. Mude o nome e o ícone da tag para o novo objeto (ou remova e cadastre de novo) e passe a tag física para o novo objeto.
+
+### Bluetooth e bateria!
+
+## Por que o Bluetooth é necessário?
+
+É por Bluetooth que o celular encontra as tags, mede o sinal (a distância aproximada) e manda a tag tocar. Sem ele, o aplicativo não consegue falar com as tags. O app pede permissão de Bluetooth na primeira vez que você o usa.
+
+## Por que a tag não aparece na busca?
+
+Confira se o Bluetooth do celular está ligado e se o aplicativo tem permissão de Bluetooth (no Android, também a de localização).
+Aproxime a tag do celular.
+Verifique se a bateria da tag não acabou.
+Lembre que no Expo Go o Bluetooth real não funciona: o aplicativo roda em modo demonstração, com tags de exemplo.
+
+## A tag perdeu a conexão. O que eu faço?
+
+Aproxime-se da tag, confira se o Bluetooth está ligado e abra a janela de detalhes (ícone de olho) para ver o status. Se continuar sem conexão, verifique a bateria da tag.
+
+## Qual é o alcance da tag?
+
+Depende do modelo da tag e do ambiente. Paredes e objetos grandes reduzem o alcance, e espaços abertos aumentam. O aplicativo mostra a distância aproximada, e você deve se aproximar da tag para o sinal melhorar.
+
+## Quando devo trocar a bateria da tag?
+
+Quando a bateria mostrada no aplicativo estiver baixa, ou quando a tag começar a perder conexão com frequência estando perto. Siga as instruções do fabricante da tag para a troca.
 
 ---
 
