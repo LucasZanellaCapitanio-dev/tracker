@@ -1,2 +1,29 @@
 .expo/
 node_modules/
+
+# Pastas nativas geradas pelo expo run:android / prebuild
+android/
+ios/
+
+# Builds e arquivos gerados
+*.apk
+*.aab
+*.ipa
+dist/
+web-build/
+
+# Chaves de assinatura (nunca suba para o Git)
+*.jks
+*.keystore
+*.p8
+*.p12
+*.mobileprovision
+
+# Variáveis de ambiente e segredos
+.env
+.env*.local
+
+# Sistema e editor
+.DS_Store
+npm-debug.*
+*.log
