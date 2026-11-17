@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Linking, PermissionsAndroid, Platform, Vibration } from 'react-native';
+import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import { obterPreferencias } from './preferencias';
 
 // Quanto tempo cada busca por aparelhos próximos dura antes de parar sozinha (economiza bateria).
@@ -13,6 +14,8 @@ const INTERVALO_LENTO_MS = 2000;  // sinal fraco: uma vibração a cada 2 segund
 const PULSO_MS = 100;          // duração de cada vibração (no iOS o sistema usa duração fixa)
 const SINAL_VALIDO_MS = 3000;  // sem nenhuma leitura por esse tempo = "sem sinal" (não vibra)
 const TEMPO_MAXIMO_MS = 120000; // o toque para sozinho depois de 2 minutos (economiza bateria)
+const INTERVALO_BEEP_MS = 2000; // os 3 beeps tocam de 2 em 2 segundos
+const ESPERA_SINAL_MS = 500;    // sem sinal, tenta de novo a cada meio segundo (o beep sai assim que o sinal chega)
 // =============================================
 
 // Modo demonstração: usado quando o módulo nativo não existe (Expo Snack / Expo Go).
@@ -258,6 +261,50 @@ export function intervaloPorSinal(rssi) {
   return Math.round(INTERVALO_RAPIDO_MS + t * (INTERVALO_LENTO_MS - INTERVALO_RAPIDO_MS));
 }
 
+// ===== SOM DO BOTÃO TOCAR =====
+// 8 arquivos, cada um com 3 beeps numa frequência diferente (500 Hz até 2500 Hz).
+// Quanto mais perto da tag (sinal mais forte), mais agudo (maior a frequência) é o beep.
+// Para mudar as notas, gere outros arquivos com os mesmos nomes na pasta assets/beeps.
+const SONS_BEEP = [
+  require('../assets/beeps/beep-1.wav'), // 500 Hz  (longe)
+  require('../assets/beeps/beep-2.wav'), // 629 Hz
+  require('../assets/beeps/beep-3.wav'), // 792 Hz
+  require('../assets/beeps/beep-4.wav'), // 996 Hz
+  require('../assets/beeps/beep-5.wav'), // 1254 Hz
+  require('../assets/beeps/beep-6.wav'), // 1578 Hz
+  require('../assets/beeps/beep-7.wav'), // 1986 Hz
+  require('../assets/beeps/beep-8.wav'), // 2500 Hz (colado na tag)
+];
+
+// Sinal (RSSI) -> número do arquivo de 0 (longe, grave) a 7 (perto, agudo).
+export function nivelBeepPorSinal(rssi) {
+  const t = Math.min(1, Math.max(0, (rssi - RSSI_FRACO) / (RSSI_FORTE - RSSI_FRACO)));
+  return Math.round(t * (SONS_BEEP.length - 1));
+}
+
+// Um player por frequência, criado só quando é usado e liberado quando o toque para.
+const players = new Map();
+
+async function tocarBeep(nivel) {
+  try {
+    await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false });
+    let p = players.get(nivel);
+    if (!p) {
+      p = createAudioPlayer(SONS_BEEP[nivel]);
+      players.set(nivel, p);
+    }
+    p.volume = 1.0;
+    await p.seekTo(0); // o expo-audio não volta ao início sozinho
+    p.play();
+  } catch (e) { /* falha de áudio não pode derrubar o toque; a vibração continua */ }
+}
+
+function liberarBeeps() {
+  players.forEach((p) => { try { p.remove(); } catch (e) { /* já liberado */ } });
+  players.clear();
+}
+// ===============================
+
 const mesmoId = (a, b) => String(a).toUpperCase() === String(b).toUpperCase();
 
 // Botão TOCAR: faz o celular vibrar no ritmo da força do sinal do aparelho pareado.
@@ -276,7 +323,9 @@ export function useToque() {
     if (!s) return;
     s.ativo = false;
     clearTimeout(s.timer);
+    clearTimeout(s.timerSom);
     clearTimeout(s.limite);
+    liberarBeeps();
     clearInterval(s.leitor);
     try { s.ble.stopDeviceScan(); } catch (e) { /* já parado */ }
     s.ble.cancelDeviceConnection(s.deviceId).catch(() => { /* não estava conectado */ });
@@ -300,7 +349,7 @@ export function useToque() {
       return;
     }
 
-    const s = { ble, deviceId: tag.deviceId, ativo: true, amostras: [], ultima: 0, timer: null, limite: null, leitor: null };
+    const s = { ble, deviceId: tag.deviceId, ativo: true, amostras: [], ultima: 0, timer: null, timerSom: null, limite: null, leitor: null };
     sessao.current = s;
     setTocandoId(tag.id);
 
@@ -350,6 +399,23 @@ export function useToque() {
       s.timer = setTimeout(ciclo, intervaloPorSinal(rssi));
     };
     ciclo();
+
+    // Laço do som: a cada 2 s toca os 3 beeps, com a frequência calculada pelo sinal MAIS RECENTE.
+    // Respeita o ajuste "SOM DO RASTREADOR" das Configurações. Sem sinal: fica em silêncio.
+    const cicloSom = () => {
+      if (!s.ativo) return;
+      const temSinal = s.amostras.length > 0 && Date.now() - s.ultima <= SINAL_VALIDO_MS;
+      if (!temSinal) {
+        s.timerSom = setTimeout(cicloSom, ESPERA_SINAL_MS);
+        return;
+      }
+      if (obterPreferencias().som) {
+        const rssi = s.amostras.reduce((a, b) => a + b, 0) / s.amostras.length;
+        tocarBeep(nivelBeepPorSinal(rssi));
+      }
+      s.timerSom = setTimeout(cicloSom, INTERVALO_BEEP_MS);
+    };
+    cicloSom();
     s.limite = setTimeout(parar, TEMPO_MAXIMO_MS);
   }, [parar]);
 
