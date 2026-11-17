@@ -38,6 +38,11 @@ function Principal() {
   const [tags, setTags] = useState(TAGS_EXEMPLO);
   const [editando, setEditando] = useState({ nome: '', icone: 'briefcase-outline' });
 
+  
+  const removerTag = (tag) => {
+    setTags((lista) => lista.filter((t) => t.id !== tag.id));
+  };
+
   const esquerda = VOLTAR[tela]
     ? { icone: 'arrow-left', rotulo: 'Voltar', onPress: () => setTela(VOLTAR[tela]) }
     : undefined;
@@ -66,7 +71,7 @@ function Principal() {
     />
   ); 
   else if (tela === 'editar') conteudo = <EditarTag tag={editando} onSalvar={() => setTela('inicio')} />;
-  else conteudo = <Inicio tags={tags} onAdicionar={() => setTela('adicionar')} onEditar={(tag) => { setEditando(tag); setTela('editar'); }} onAssistente={() => setTela('assistente')} />;
+  else conteudo = <Inicio tags={tags} onAdicionar={() => setTela('adicionar')} onEditar={(tag) => { setEditando(tag); setTela('editar'); }} onRemover={removerTag} onAssistente={() => setTela('assistente')} />;
 
   return (
     <View style={s.root}>

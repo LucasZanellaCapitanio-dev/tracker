@@ -1,5 +1,5 @@
 // TELA INICIAL (versão 5). É este arquivo que o App.js usa: src/screens/TelaInicio.js
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Cartao from '../components/Cartao';
@@ -67,18 +67,43 @@ export default function Inicio({ tags = TAGS_EXEMPLO, onTocar, onRemover, onEdit
   const [indice, setIndice] = useState(0);
   const [confirmando, setConfirmando] = useState(false);
   const [detalhes, setDetalhes] = useState(false);
-  const { tocandoId, alternar } = useToque();
-  const atual = tags[indice] || tags[0];
+  const { tocandoId, alternar, parar } = useToque();
+  const lista = useRef(null);
+  const atual = tags[indice] || tags[0]; // fica undefined quando não há nenhuma tag
+
+  // Remove a tag atual: para o toque se ela estiver tocando, avisa o App e ajusta a página.
+  const remover = () => {
+    if (!atual) return;
+    if (tocandoId === atual.id) parar(); // para vibração, busca e conexão desta tag
+    const restantes = tags.length - 1;
+    const novoIndice = Math.max(0, Math.min(indice, restantes - 1)); // se era a última, vai para a anterior
+    setIndice(novoIndice);
+    onRemover && onRemover(atual);
+    if (restantes > 0) {
+      // depois que a lista atualiza, posiciona na página certa (sem animação)
+      setTimeout(() => lista.current && lista.current.scrollToIndex({ index: novoIndice, animated: false }), 0);
+    }
+  };
 
   return (
     <View style={s.tela}>
       <Cartao style={s.cartao}>
+        {tags.length === 0 ? (
+          <View style={s.vazio}>
+            <MaterialCommunityIcons name="tag-outline" size={80} color={cores.escuro} />
+            <Text style={s.vazioTitulo} accessibilityRole="header">Nenhuma tag</Text>
+            <Text style={s.vazioTexto}>Toque no botão abaixo para adicionar uma tag.</Text>
+            <Botao titulo="ADICIONAR TAG" tamanho="grande" variante="azul" onPress={onAdicionar} style={s.vazioBotao} rotulo="Adicionar nova tag" />
+          </View>
+        ) : (
+          <>
         <View
           style={s.listaBox}
           onLayout={(e) => setMedida({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
         >
           {medida.w > 0 && (
             <FlatList
+              ref={lista}
               style={{ width: medida.w, height: medida.h }}
               horizontal
               data={tags}
@@ -117,6 +142,8 @@ export default function Inicio({ tags = TAGS_EXEMPLO, onTocar, onRemover, onEdit
           ))}
           <Text style={s.contagem}>{indice + 1} de {tags.length}</Text>
         </View>
+          </>
+        )}
       </Cartao>
 
       {/* Zona própria do robô: não cobre o cartão e a tela não precisa rolar */}
@@ -129,10 +156,10 @@ export default function Inicio({ tags = TAGS_EXEMPLO, onTocar, onRemover, onEdit
       <DetalhesTag visivel={detalhes} item={atual} onFechar={() => setDetalhes(false)} />
 
       <ConfirmarRemocao
-        visivel={confirmando}
-        nome={atual.nome.toLowerCase()}
+        visivel={confirmando && !!atual}
+        nome={atual ? atual.nome.toLowerCase() : ''}
         onCancelar={() => setConfirmando(false)}
-        onConfirmar={() => { setConfirmando(false); onRemover && onRemover(atual); }}
+        onConfirmar={() => { setConfirmando(false); remover(); }}
       />
     </View>
   );
@@ -186,6 +213,10 @@ const s = StyleSheet.create({
   bolinha: { width: 12, height: 12, borderRadius: 6, backgroundColor: cores.cinza },
   bolinhaAtiva: { width: 28, backgroundColor: cores.escuro },
   contagem: { marginLeft: 8, fontSize: 16, fontWeight: '800', color: cores.texto },
+  vazio: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 12 },
+  vazioTitulo: { fontSize: 38, fontWeight: '800', color: cores.texto, textAlign: 'center' },
+  vazioTexto: { fontSize: 24, fontWeight: '700', color: cores.escuro, textAlign: 'center' },
+  vazioBotao: { alignSelf: 'stretch', minHeight: 96, marginTop: 12 },
   zonaRobo: { alignItems: 'center', paddingVertical: 8 },
   robo: {
     width: 136,
