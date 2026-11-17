@@ -1,9 +1,9 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Platform, StyleSheet } from 'react-native';
 import Cartao from '../components/Cartao';
 import Botao from '../components/Botao';
 import { cores } from '../theme';
-import { useDispositivosBluetooth } from '../bluetooth';
+import { useDispositivosBluetooth, descreverProximidade } from '../bluetooth';
 
 // Aviso com ação opcional (Bluetooth desligado, sem permissão, etc.).
 function Aviso({ texto, botao, onPress }) {
@@ -16,7 +16,17 @@ function Aviso({ texto, botao, onPress }) {
 }
 
 export default function AdicionarTag({ onEscolher }) {
-  const { estado, procurando, dispositivos, demo, procurar, reverificar, ligar } = useDispositivosBluetooth();
+  const { estado, procurando, dispositivos, demo, modo, mudarModo, erroBusca, procurar, reverificar, ligar } = useDispositivosBluetooth();
+  const [mostrarSemNome, setMostrarSemNome] = useState(false);
+
+  // Na busca por aparelhos próximos aparece muita coisa anônima (celulares, relógios...).
+  // Por padrão só entram os que têm nome; um botão libera os sem nome, que podem ser tags.
+  const todos = dispositivos.map((d) => ({
+    ...d,
+    nomeExibido: d.nome || `Aparelho sem nome, final ${String(d.id).slice(-5)}`,
+  }));
+  const visiveis = mostrarSemNome ? todos : todos.filter((d) => d.nome);
+  const ocultos = todos.length - visiveis.length;
 
   let corpo;
   if (estado === 'verificando') {
@@ -30,22 +40,46 @@ export default function AdicionarTag({ onEscolher }) {
   } else {
     corpo = (
       <>
+        {Platform.OS === 'android' ? (
+          <View style={s.modos}>
+            <Botao
+              titulo="PAREADOS"
+              variante={modo === 'pareados' ? 'escuro' : 'claro'}
+              tamanho="medio"
+              rotulo={`Aparelhos pareados${modo === 'pareados' ? ', selecionado' : ''}`}
+              onPress={() => mudarModo('pareados')}
+              style={s.botaoModo}
+            />
+            <Botao
+              titulo="PRÓXIMOS"
+              variante={modo === 'proximos' ? 'escuro' : 'claro'}
+              tamanho="medio"
+              rotulo={`Aparelhos próximos, inclui tags não pareadas${modo === 'proximos' ? ', selecionado' : ''}`}
+              onPress={() => mudarModo('proximos')}
+              style={s.botaoModo}
+            />
+          </View>
+        ) : null}
         {demo ? (
           <Text style={s.demo} accessibilityLabel="Identificando aparelhos bluetooth.">
             Identificando aparelhos bluetooth.
           </Text>
         ) : null}
-        {dispositivos.map((d) => (
-          <TouchableOpacity
-            key={d.id}
-            style={s.linha}
-            onPress={() => onEscolher && onEscolher(d)}
-            accessibilityRole="button"
-            accessibilityLabel={`Escolher ${d.nome}`}
-          >
-            <Text style={s.texto} numberOfLines={2}>{d.nome}</Text>
-          </TouchableOpacity>
-        ))}
+        {visiveis.map((d) => {
+          const prox = descreverProximidade(d.rssi);
+          return (
+            <TouchableOpacity
+              key={d.id}
+              style={s.linha}
+              onPress={() => onEscolher && onEscolher({ id: d.id, nome: d.nomeExibido })}
+              accessibilityRole="button"
+              accessibilityLabel={`Escolher ${d.nomeExibido}${prox ? `, ${prox}` : ''}`}
+            >
+              <Text style={s.texto} numberOfLines={2}>{d.nomeExibido}</Text>
+              {prox ? <Text style={s.proximidade}>{prox}</Text> : null}
+            </TouchableOpacity>
+          );
+        })}
 
         {procurando ? (
           <View style={s.status} accessible accessibilityLiveRegion="polite" accessibilityLabel="Procurando dispositivos">
@@ -54,8 +88,25 @@ export default function AdicionarTag({ onEscolher }) {
           </View>
         ) : (
           <View style={s.status}>
-            {dispositivos.length === 0 ? (
-              <Text style={s.textoStatus} accessibilityLiveRegion="polite">Nenhum aparelho pareado encontrado. Pareie o aparelho nas configurações de Bluetooth do celular e toque em procurar novamente.</Text>
+            {erroBusca ? (
+              <Text style={s.textoStatus} accessibilityLiveRegion="polite">Não foi possível procurar. Confira se a localização do celular está ligada.</Text>
+            ) : null}
+            {!erroBusca && visiveis.length === 0 ? (
+              <Text style={s.textoStatus} accessibilityLiveRegion="polite">
+                {modo === 'pareados'
+                  ? 'Nenhum aparelho pareado encontrado. Toque em PRÓXIMOS para procurar tags que não estão pareadas.'
+                  : 'Nenhum aparelho encontrado por perto. Aproxime a tag do celular, confira se ela está ligada e procure novamente.'}
+              </Text>
+            ) : null}
+            {modo === 'proximos' && ocultos > 0 ? (
+              <Botao
+                titulo={`MOSTRAR ${ocultos} SEM NOME`}
+                rotulo={`Mostrar ${ocultos} aparelhos sem nome`}
+                variante="claro"
+                tamanho="medio"
+                onPress={() => setMostrarSemNome(true)}
+                style={s.botaoAviso}
+              />
             ) : null}
             <Botao titulo="PROCURAR NOVAMENTE" variante="azul" tamanho="medio" onPress={procurar} style={s.botaoAviso} />
           </View>
@@ -84,6 +135,9 @@ const s = StyleSheet.create({
     borderBottomColor: cores.texto,
   },
   texto: { fontSize: 26, fontWeight: '800', color: cores.texto, textAlign: 'center' },
+  proximidade: { fontSize: 20, fontWeight: '700', color: cores.escuro, textAlign: 'center', marginTop: 2 },
+  modos: { flexDirection: 'row', gap: 12, padding: 12, borderBottomWidth: 2, borderBottomColor: cores.texto },
+  botaoModo: { flex: 1, minHeight: 64 },
   demo: { textAlign: 'center', fontSize: 26, fontWeight: '800', color: cores.escuro, paddingVertical: 10 },
   aviso: { flex: 1, minHeight: 420, alignItems: 'center', justifyContent: 'center', padding: 16, gap: 20 },
   textoAviso: { fontSize: 24, fontWeight: '800', color: cores.texto, textAlign: 'center' },

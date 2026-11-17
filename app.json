@@ -16,7 +16,7 @@
         "react-native-ble-plx",
         {
           "bluetoothAlwaysPermission": "O app usa o Bluetooth para encontrar e tocar os seus rastreadores.",
-          "neverForLocation": true
+          "neverForLocation": false
         }
       ],
       "expo-asset"
@@ -28,6 +28,7 @@
         "android.permission.BLUETOOTH_SCAN",
         "android.permission.BLUETOOTH_CONNECT",
         "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.VIBRATE",
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS",

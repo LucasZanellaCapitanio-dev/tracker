@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Linking, PermissionsAndroid, Platform, Vibration } from 'react-native';
 import { obterPreferencias } from './preferencias';
 
-// Quanto tempo cada busca dura antes de parar sozinha (economiza bateria). Só usado no iOS.
+// Quanto tempo cada busca por aparelhos próximos dura antes de parar sozinha (economiza bateria).
 const DURACAO_BUSCA_MS = 15000;
 
 // ===== AJUSTE DA VIBRAÇÃO DO BOTÃO TOCAR =====
@@ -18,10 +18,10 @@ const TEMPO_MAXIMO_MS = 120000; // o toque para sozinho depois de 2 minutos (eco
 // Modo demonstração: usado quando o módulo nativo não existe (Expo Snack / Expo Go).
 // Simula a busca com estes dispositivos de exemplo.
 const DISPOSITIVOS_DEMO = [
-  { id: 'demo-1', nome: 'Tag Chaves' },
-  { id: 'demo-2', nome: 'Tag Mochila' },
-  { id: 'demo-3', nome: 'Fone Bluetooth' },
-  { id: 'demo-4', nome: 'Caixa de Som' },
+  { id: 'demo-1', nome: 'Tag Chaves', rssi: -48 },
+  { id: 'demo-2', nome: 'Tag Mochila', rssi: -67 },
+  { id: 'demo-3', nome: 'Fone Bluetooth', rssi: -78 },
+  { id: 'demo-4', nome: null, rssi: -90 },
 ];
 
 // Estados que a tela precisa tratar.
@@ -41,13 +41,16 @@ async function pedirPermissoes() {
   if (Platform.OS !== 'android') return true;
 
   const P = PermissionsAndroid.PERMISSIONS;
-  const lista = Platform.Version >= 31
-    ? [P.BLUETOOTH_SCAN, P.BLUETOOTH_CONNECT]
-    : [P.ACCESS_FINE_LOCATION];
+  const novo = Platform.Version >= 31;
+  // Obrigatórias para procurar/conectar. No Android 12+ são as duas de Bluetooth; antes disso, a localização.
+  const obrigatorias = novo ? [P.BLUETOOTH_SCAN, P.BLUETOOTH_CONNECT] : [P.ACCESS_FINE_LOCATION];
+  // No Android 12+ a localização também é pedida: sem ela o sistema esconde alguns anúncios
+  // (tags tipo beacon). Se a pessoa negar, a busca ainda funciona, só pode achar menos aparelhos.
+  const lista = novo ? [...obrigatorias, P.ACCESS_FINE_LOCATION] : obrigatorias;
 
   const resultado = await PermissionsAndroid.requestMultiple(lista);
 
-  return lista.every(
+  return obrigatorias.every(
     (permissao) =>
       resultado[permissao] === PermissionsAndroid.RESULTS.GRANTED
   );
@@ -79,27 +82,59 @@ async function listarPareados() {
   }));
 }
 
-// Detecta se o Bluetooth está ligado e, estando, lista os aparelhos pareados.
+// Modos da tela "Adicionar tag":
+//  pareados  = aparelhos já pareados com o celular (só Android);
+//  proximos  = qualquer aparelho Bluetooth LE por perto, pareado ou não (é o que acha as tags).
+// No iOS o sistema não revela os pareados, então só existe "proximos".
+const MODO_INICIAL = Platform.OS === 'android' ? 'pareados' : 'proximos';
+
+// Traduz o sinal (RSSI, dBm) em uma frase curta, boa para leitor de tela.
+// Dá para identificar a tag certa aproximando-a do celular: a frase vai para "muito perto".
+export function descreverProximidade(rssi) {
+  if (rssi == null) return '';
+  if (rssi >= -55) return 'muito perto';
+  if (rssi >= -70) return 'perto';
+  if (rssi >= -85) return 'longe';
+  return 'muito longe';
+}
+
+// Atualiza a lista na tela no máximo uma vez por intervalo (os anúncios chegam várias vezes por segundo).
+const ATUALIZAR_LISTA_MS = 700;
+
+// Detecta se o Bluetooth está ligado e, estando, lista os aparelhos pareados ou próximos.
 export function useDispositivosBluetooth() {
   const [estado, setEstado] = useState('verificando');
   const [procurando, setProcurando] = useState(false);
   const [dispositivos, setDispositivos] = useState([]);
+  const [modo, setModo] = useState(MODO_INICIAL);
+  const [erroBusca, setErroBusca] = useState(false);
   const [demo, setDemo] = useState(false);
+  const modoRef = useRef(MODO_INICIAL);
   const demoRef = useRef(false);
   const timersDemo = useRef([]);
   const ble = useRef(null);
   const mapa = useRef(new Map());
   const timer = useRef(null);
+  const atualizacao = useRef(null);
 
   const parar = useCallback(() => {
     clearTimeout(timer.current);
+    clearTimeout(atualizacao.current);
+    atualizacao.current = null;
     timersDemo.current.forEach(clearTimeout);
     timersDemo.current = [];
     try { ble.current && ble.current.stopDeviceScan(); } catch (e) { /* o scan pode já estar parado; pode ignorar */ }
     setProcurando(false);
   }, []);
 
+  // Copia o que a busca achou para a tela.
+  const publicar = useCallback(() => {
+    atualizacao.current = null;
+    setDispositivos([...mapa.current.values()].map((d) => ({ ...d })));
+  }, []);
+
   const procurar = useCallback(async () => {
+    setErroBusca(false);
     if (demoRef.current) {
       parar();
       setDispositivos([]);
@@ -114,8 +149,9 @@ export function useDispositivosBluetooth() {
     if (!m) return;
     if (!(await pedirPermissoes())) { setEstado('sem_permissao'); return; }
 
-    // Android: mostra os aparelhos que já estão pareados com o celular.
-    if (Platform.OS === 'android') {
+    // Android, modo "pareados": mostra os aparelhos que já estão pareados com o celular.
+    if (Platform.OS === 'android' && modoRef.current === 'pareados') {
+      parar();
       setDispositivos([]);
       setProcurando(true);
       try {
@@ -128,22 +164,37 @@ export function useDispositivosBluetooth() {
       return;
     }
 
-    // iOS: o sistema não revela os aparelhos pareados, então continua a busca por anúncios.
-    m.stopDeviceScan();
-    clearTimeout(timer.current);
+    // Modo "próximos" (Android e iOS): busca os anúncios Bluetooth LE ao redor, pareados ou não.
+    // É assim que as tags de rastreamento são achadas: elas só "gritam" o próprio sinal.
+    parar();
     mapa.current.clear();
     setDispositivos([]);
     setProcurando(true);
-    m.startDeviceScan(null, { allowDuplicates: false }, (erro, d) => {
-      if (erro) { parar(); return; }
-      const nome = d && (d.name || d.localName);
-      if (!nome || mapa.current.has(d.id)) return; // ignora anônimos e repetidos
-      mapa.current.set(d.id, { id: d.id, nome });
+    m.startDeviceScan(null, { allowDuplicates: true, scanMode: 2 /* LowLatency */ }, (erro, d) => {
+      if (erro) { parar(); setErroBusca(true); return; }
+      if (!d) return;
+      const nome = d.name || d.localName || null;
+      const atual = mapa.current.get(d.id);
+      if (!atual) {
+        mapa.current.set(d.id, { id: d.id, nome, rssi: d.rssi });
+      } else {
+        if (!atual.nome && nome) atual.nome = nome;
+        // Suaviza o sinal para a frase "perto/longe" não ficar mudando a cada anúncio.
+        if (d.rssi != null) atual.rssi = atual.rssi == null ? d.rssi : Math.round(atual.rssi * 0.6 + d.rssi * 0.4);
+      }
       // Mantém a ordem de chegada: a lista não "pula" enquanto a pessoa navega com leitor de tela.
-      setDispositivos([...mapa.current.values()]);
+      if (!atualizacao.current) atualizacao.current = setTimeout(publicar, ATUALIZAR_LISTA_MS);
     });
-    timer.current = setTimeout(parar, DURACAO_BUSCA_MS);
-  }, [parar]);
+    timer.current = setTimeout(() => { parar(); publicar(); }, DURACAO_BUSCA_MS);
+  }, [parar, publicar]);
+
+  // Troca entre "pareados" e "próximos" e já refaz a busca.
+  const mudarModo = useCallback((novo) => {
+    if (novo === modoRef.current) return;
+    modoRef.current = novo;
+    setModo(novo);
+    procurar();
+  }, [procurar]);
 
   // Monta: pede permissão, lê o estado do Bluetooth e acompanha mudanças (ligar/desligar).
   useEffect(() => {
@@ -197,7 +248,7 @@ export function useDispositivosBluetooth() {
     }
   }, []);
 
-  return { estado, procurando, dispositivos, demo, procurar, reverificar, ligar };
+  return { estado, procurando, dispositivos, demo, modo, mudarModo, erroBusca, procurar, reverificar, ligar };
 }
 
 // Converte a força do sinal (RSSI, em dBm) no tempo entre vibrações:
