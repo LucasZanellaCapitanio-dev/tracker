@@ -36,16 +36,23 @@ function obterGerenciador() {
   return gerenciador;
 }
 
+
 async function pedirPermissoes() {
-  if (Platform.OS !== 'android') return true; // no iOS o sistema pergunta sozinho
+  if (Platform.OS !== 'android') return true;
+
   const P = PermissionsAndroid.PERMISSIONS;
-  // Android 12+: SCAN + CONNECT (CONNECT também é necessário para ler a lista de pareados).
-  // A localização continua na lista porque o Android só entrega os resultados da busca sem ela
-  // quando o manifesto declara "neverForLocation".
-  const lista = Platform.Version >= 31 ? [P.BLUETOOTH_SCAN, P.BLUETOOTH_CONNECT, P.ACCESS_FINE_LOCATION] : [P.ACCESS_FINE_LOCATION];
-  const r = await PermissionsAndroid.requestMultiple(lista);
-  return lista.every((p) => r[p] === PermissionsAndroid.RESULTS.GRANTED);
+  const lista = Platform.Version >= 31
+    ? [P.BLUETOOTH_SCAN, P.BLUETOOTH_CONNECT]
+    : [P.ACCESS_FINE_LOCATION];
+
+  const resultado = await PermissionsAndroid.requestMultiple(lista);
+
+  return lista.every(
+    (permissao) =>
+      resultado[permissao] === PermissionsAndroid.RESULTS.GRANTED
+  );
 }
+
 
 function traduzirEstado(s) {
   if (s === 'PoweredOn') return 'ligado';

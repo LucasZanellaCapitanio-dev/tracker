@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "Rastreador Wireframe",
-    "slug": "rastreador-wireframe",
+    "name": "Tracker",
+    "slug": "tracker",
+    "owner": "lucaszcifsc",
     "version": "1.0.0",
     "orientation": "portrait",
     "plugins": [
@@ -14,7 +15,8 @@
       [
         "react-native-ble-plx",
         {
-          "bluetoothAlwaysPermission": "O app usa o Bluetooth para encontrar e tocar os seus rastreadores."
+          "bluetoothAlwaysPermission": "O app usa o Bluetooth para encontrar e tocar os seus rastreadores.",
+          "neverForLocation": true
         }
       ],
       "expo-asset"
@@ -32,12 +34,19 @@
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
       ],
-      "package": "com.lucaszc.rastreadorwireframe"
+      "package": "com.lucaszcifsc.tracker"
     },
     "extra": {
       "eas": {
-        "projectId": "3c5bddac-b586-4c6c-a53a-c32e9ad69991"
+        "projectId": "bd2822ff-8c51-4e64-8d5e-d821a25defdd"
       }
-    }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/bd2822ff-8c51-4e64-8d5e-d821a25defdd"
+    },
+    "ios": {}
   }
 }
