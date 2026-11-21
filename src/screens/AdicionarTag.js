@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Platform, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import Cartao from '../components/Cartao';
 import Botao from '../components/Botao';
 import { cores } from '../theme';
@@ -16,7 +16,7 @@ function Aviso({ texto, botao, onPress }) {
 }
 
 export default function AdicionarTag({ onEscolher }) {
-  const { estado, procurando, dispositivos, demo, modo, mudarModo, erroBusca, procurar, reverificar, ligar } = useDispositivosBluetooth();
+  const { estado, procurando, dispositivos, erroBusca, procurar, reverificar, ligar } = useDispositivosBluetooth();
   const [mostrarSemNome, setMostrarSemNome] = useState(false);
 
   // Na busca por aparelhos próximos aparece muita coisa anônima (celulares, relógios...).
@@ -40,31 +40,6 @@ export default function AdicionarTag({ onEscolher }) {
   } else {
     corpo = (
       <>
-        {Platform.OS === 'android' ? (
-          <View style={s.modos}>
-            <Botao
-              titulo="PAREADOS"
-              variante={modo === 'pareados' ? 'escuro' : 'claro'}
-              tamanho="medio"
-              rotulo={`Aparelhos pareados${modo === 'pareados' ? ', selecionado' : ''}`}
-              onPress={() => mudarModo('pareados')}
-              style={s.botaoModo}
-            />
-            <Botao
-              titulo="PRÓXIMOS"
-              variante={modo === 'proximos' ? 'escuro' : 'claro'}
-              tamanho="medio"
-              rotulo={`Aparelhos próximos, inclui tags não pareadas${modo === 'proximos' ? ', selecionado' : ''}`}
-              onPress={() => mudarModo('proximos')}
-              style={s.botaoModo}
-            />
-          </View>
-        ) : null}
-        {demo ? (
-          <Text style={s.demo} accessibilityLabel="Identificando aparelhos bluetooth.">
-            Identificando aparelhos bluetooth.
-          </Text>
-        ) : null}
         {visiveis.map((d) => {
           const prox = descreverProximidade(d.rssi);
           return (
@@ -93,12 +68,12 @@ export default function AdicionarTag({ onEscolher }) {
             ) : null}
             {!erroBusca && visiveis.length === 0 ? (
               <Text style={s.textoStatus} accessibilityLiveRegion="polite">
-                {modo === 'pareados'
-                  ? 'Nenhum aparelho pareado encontrado. Toque em PRÓXIMOS para procurar tags que não estão pareadas.'
-                  : 'Nenhum aparelho encontrado por perto. Aproxime a tag do celular, confira se ela está ligada e procure novamente.'}
+                {ocultos > 0
+                  ? `Foram achados ${ocultos} aparelhos sem nome. Toque em MOSTRAR SEM NOME para ver. A tag pode estar entre eles.`
+                  : 'Nenhum aparelho encontrado por perto. Aproxime a tag do celular, confira se ela está ligada e desconectada de outros celulares, e procure novamente.'}
               </Text>
             ) : null}
-            {modo === 'proximos' && ocultos > 0 ? (
+            {ocultos > 0 ? (
               <Botao
                 titulo={`MOSTRAR ${ocultos} SEM NOME`}
                 rotulo={`Mostrar ${ocultos} aparelhos sem nome`}
@@ -136,9 +111,6 @@ const s = StyleSheet.create({
   },
   texto: { fontSize: 26, fontWeight: '800', color: cores.texto, textAlign: 'center' },
   proximidade: { fontSize: 20, fontWeight: '700', color: cores.escuro, textAlign: 'center', marginTop: 2 },
-  modos: { flexDirection: 'row', gap: 12, padding: 12, borderBottomWidth: 2, borderBottomColor: cores.texto },
-  botaoModo: { flex: 1, minHeight: 64 },
-  demo: { textAlign: 'center', fontSize: 26, fontWeight: '800', color: cores.escuro, paddingVertical: 10 },
   aviso: { flex: 1, minHeight: 420, alignItems: 'center', justifyContent: 'center', padding: 16, gap: 20 },
   textoAviso: { fontSize: 24, fontWeight: '800', color: cores.texto, textAlign: 'center' },
   botaoAviso: { alignSelf: 'stretch', minHeight: 72 },

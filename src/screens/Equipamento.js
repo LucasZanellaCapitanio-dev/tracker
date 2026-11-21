@@ -16,7 +16,7 @@ export default function Equipamento() {
           </View>
           <View style={{ flex: 1 }}>
             <Text style={s.nome}>Nome do equipamento</Text>
-            <Text style={s.suave}>Distância · Bateria</Text>
+            <Text style={s.suave}>Distância</Text>
           </View>
           <View style={s.status}>
             <View style={s.ponto} />

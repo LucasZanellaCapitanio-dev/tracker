@@ -12,20 +12,24 @@ const RSSI_FRACO = -100;       // sinal neste valor (dBm) ou pior = vibra no rit
 const INTERVALO_RAPIDO_MS = 250;  // sinal forte: uma vibração a cada 1/4 de segundo
 const INTERVALO_LENTO_MS = 2000;  // sinal fraco: uma vibração a cada 2 segundos
 const PULSO_MS = 100;          // duração de cada vibração (no iOS o sistema usa duração fixa)
-const SINAL_VALIDO_MS = 3000;  // sem nenhuma leitura por esse tempo = "sem sinal" (não vibra)
+const SINAL_VALIDO_MS = 6000;  // sem nenhuma leitura por esse tempo = "sem sinal" (não vibra). Tags que anunciam devagar precisam de folga
+const AVISO_SEM_SINAL_MS = 4000; // sem sinal depois desse tempo de toque: o status deixa de ser "Procurando sinal"
+const ALERTA_SEM_SINAL_MS = 10000; // nunca achou a tag em 10 s: mostra um aviso (uma vez por toque)
+
+// ===== AJUSTE DOS TEXTOS DE DISTÂNCIA E DA QUALIDADE DO SINAL (mexa só aqui) =====
+// O app mede a força do sinal (RSSI, em dBm; quanto mais perto de 0, mais forte) e traduz em texto.
+const LIMITE_MUITO_PERTO = -55; // a partir daqui (dBm) = "muito perto"
+const LIMITE_PERTO = -70;       // a partir daqui = "perto"
+const LIMITE_LONGE = -85;       // a partir daqui = "longe"; mais fraco que isso = "muito longe"
+const RSSI_SINAL_FRACO = -92;   // mais fraco que isso, o status vira "Sinal fraco"
+const LEITURAS_MINIMAS = 2;     // menos leituras que isso na janela abaixo = "Conexão ruim"
+const JANELA_LEITURAS_MS = 5000;
+const ATUALIZAR_STATUS_MS = 800; // de quanto em quanto tempo o texto da tela é reavaliado
+// ==================================================================================
 const TEMPO_MAXIMO_MS = 120000; // o toque para sozinho depois de 2 minutos (economiza bateria)
 const INTERVALO_BEEP_MS = 2000; // os 3 beeps tocam de 2 em 2 segundos
 const ESPERA_SINAL_MS = 500;    // sem sinal, tenta de novo a cada meio segundo (o beep sai assim que o sinal chega)
 // =============================================
-
-// Modo demonstração: usado quando o módulo nativo não existe (Expo Snack / Expo Go).
-// Simula a busca com estes dispositivos de exemplo.
-const DISPOSITIVOS_DEMO = [
-  { id: 'demo-1', nome: 'Tag Chaves', rssi: -48 },
-  { id: 'demo-2', nome: 'Tag Mochila', rssi: -67 },
-  { id: 'demo-3', nome: 'Fone Bluetooth', rssi: -78 },
-  { id: 'demo-4', nome: null, rssi: -90 },
-];
 
 // Estados que a tela precisa tratar.
 //  verificando | ligado | desligado | sem_permissao | indisponivel
@@ -68,53 +72,26 @@ function traduzirEstado(s) {
   return 'verificando'; // Unknown / Resetting
 }
 
-// Lê os aparelhos JÁ PAREADOS com o celular (Android). O react-native-ble-plx não tem essa
-// função, por isso usamos o react-native-ble-manager só para isso.
-let bleManagerIniciado = false;
-async function listarPareados() {
-  const mod = require('react-native-ble-manager');
-  const BleManager = mod.default || mod;
-  if (!bleManagerIniciado) {
-    await BleManager.start({ showAlert: false });
-    bleManagerIniciado = true;
-  }
-  const lista = (await BleManager.getBondedPeripherals()) || [];
-  return lista.map((p) => ({
-    id: p.id,
-    nome: p.name || (p.advertising && p.advertising.localName) || 'Aparelho sem nome',
-  }));
-}
-
-// Modos da tela "Adicionar tag":
-//  pareados  = aparelhos já pareados com o celular (só Android);
-//  proximos  = qualquer aparelho Bluetooth LE por perto, pareado ou não (é o que acha as tags).
-// No iOS o sistema não revela os pareados, então só existe "proximos".
-const MODO_INICIAL = Platform.OS === 'android' ? 'pareados' : 'proximos';
-
 // Traduz o sinal (RSSI, dBm) em uma frase curta, boa para leitor de tela.
 // Dá para identificar a tag certa aproximando-a do celular: a frase vai para "muito perto".
 export function descreverProximidade(rssi) {
   if (rssi == null) return '';
-  if (rssi >= -55) return 'muito perto';
-  if (rssi >= -70) return 'perto';
-  if (rssi >= -85) return 'longe';
+  if (rssi >= LIMITE_MUITO_PERTO) return 'muito perto';
+  if (rssi >= LIMITE_PERTO) return 'perto';
+  if (rssi >= LIMITE_LONGE) return 'longe';
   return 'muito longe';
 }
 
 // Atualiza a lista na tela no máximo uma vez por intervalo (os anúncios chegam várias vezes por segundo).
 const ATUALIZAR_LISTA_MS = 700;
 
-// Detecta se o Bluetooth está ligado e, estando, lista os aparelhos pareados ou próximos.
+// Detecta se o Bluetooth está ligado e, estando, lista os aparelhos Bluetooth LE que estão por PERTO agora
+// (busca de anúncios). Não usa o histórico de aparelhos pareados do celular.
 export function useDispositivosBluetooth() {
   const [estado, setEstado] = useState('verificando');
   const [procurando, setProcurando] = useState(false);
   const [dispositivos, setDispositivos] = useState([]);
-  const [modo, setModo] = useState(MODO_INICIAL);
   const [erroBusca, setErroBusca] = useState(false);
-  const [demo, setDemo] = useState(false);
-  const modoRef = useRef(MODO_INICIAL);
-  const demoRef = useRef(false);
-  const timersDemo = useRef([]);
   const ble = useRef(null);
   const mapa = useRef(new Map());
   const timer = useRef(null);
@@ -124,8 +101,6 @@ export function useDispositivosBluetooth() {
     clearTimeout(timer.current);
     clearTimeout(atualizacao.current);
     atualizacao.current = null;
-    timersDemo.current.forEach(clearTimeout);
-    timersDemo.current = [];
     try { ble.current && ble.current.stopDeviceScan(); } catch (e) { /* o scan pode já estar parado; pode ignorar */ }
     setProcurando(false);
   }, []);
@@ -138,36 +113,11 @@ export function useDispositivosBluetooth() {
 
   const procurar = useCallback(async () => {
     setErroBusca(false);
-    if (demoRef.current) {
-      parar();
-      setDispositivos([]);
-      setProcurando(true);
-      DISPOSITIVOS_DEMO.forEach((d, i) => {
-        timersDemo.current.push(setTimeout(() => setDispositivos((l) => [...l, d]), 800 * (i + 1)));
-      });
-      timersDemo.current.push(setTimeout(parar, 800 * (DISPOSITIVOS_DEMO.length + 1)));
-      return;
-    }
     const m = ble.current;
     if (!m) return;
     if (!(await pedirPermissoes())) { setEstado('sem_permissao'); return; }
 
-    // Android, modo "pareados": mostra os aparelhos que já estão pareados com o celular.
-    if (Platform.OS === 'android' && modoRef.current === 'pareados') {
-      parar();
-      setDispositivos([]);
-      setProcurando(true);
-      try {
-        setDispositivos(await listarPareados());
-      } catch (e) {
-        setEstado('indisponivel'); // módulo nativo ausente: falta instalar e refazer o build
-      } finally {
-        setProcurando(false);
-      }
-      return;
-    }
-
-    // Modo "próximos" (Android e iOS): busca os anúncios Bluetooth LE ao redor, pareados ou não.
+    // Busca (Android e iOS) os anúncios Bluetooth LE ao redor, pareados ou não.
     // É assim que as tags de rastreamento são achadas: elas só "gritam" o próprio sinal.
     parar();
     mapa.current.clear();
@@ -191,14 +141,6 @@ export function useDispositivosBluetooth() {
     timer.current = setTimeout(() => { parar(); publicar(); }, DURACAO_BUSCA_MS);
   }, [parar, publicar]);
 
-  // Troca entre "pareados" e "próximos" e já refaz a busca.
-  const mudarModo = useCallback((novo) => {
-    if (novo === modoRef.current) return;
-    modoRef.current = novo;
-    setModo(novo);
-    procurar();
-  }, [procurar]);
-
   // Monta: pede permissão, lê o estado do Bluetooth e acompanha mudanças (ligar/desligar).
   useEffect(() => {
     let ativo = true;
@@ -207,12 +149,8 @@ export function useDispositivosBluetooth() {
       try {
         ble.current = obterGerenciador();
       } catch (e) {
-        // Sem módulo nativo: entra no modo demonstração em vez de quebrar.
-        if (ativo) {
-          demoRef.current = true;
-          setDemo(true);
-          setEstado('ligado');
-        }
+        // Sem módulo nativo (Expo Go/Snack): avisa na tela em vez de quebrar.
+        if (ativo) setEstado('indisponivel');
         return;
       }
       await pedirPermissoes();
@@ -251,7 +189,7 @@ export function useDispositivosBluetooth() {
     }
   }, []);
 
-  return { estado, procurando, dispositivos, demo, modo, mudarModo, erroBusca, procurar, reverificar, ligar };
+  return { estado, procurando, dispositivos, erroBusca, procurar, reverificar, ligar };
 }
 
 // Converte a força do sinal (RSSI, em dBm) no tempo entre vibrações:
@@ -311,15 +249,70 @@ const mesmoId = (a, b) => String(a).toUpperCase() === String(b).toUpperCase();
 // Sem sinal = não vibra. A leitura do sinal vem de duas fontes ao mesmo tempo:
 //  1) os anúncios Bluetooth que o aparelho emite (busca contínua);
 //  2) a conexão com o aparelho, quando ele aceita (aparelhos já conectados não anunciam).
+// ===== STATUS DO TOQUE =====
+// tipo: parada | procurando | boa | fraca | instavel | sem_sinal | perdido
+export const STATUS_PARADO = { tipo: 'parada', rssi: null, distancia: '' };
+
+const TEXTOS_STATUS = {
+  parada: 'Pronta para tocar',
+  procurando: 'Procurando sinal…',
+  boa: 'Conectado',
+  fraca: 'Sinal fraco',
+  instavel: 'Conexão ruim',
+  sem_sinal: 'Sem sinal da tag',
+  perdido: 'Sinal perdido',
+};
+
+export function textoStatus(status) {
+  return TEXTOS_STATUS[(status && status.tipo) || 'parada'];
+}
+
+// true quando a conexão está com problema (a tela destaca o status).
+export function statusRuim(status) {
+  return !!status && ['fraca', 'instavel', 'sem_sinal', 'perdido'].includes(status.tipo);
+}
+
+// Texto da linha de distância do cartão: só a palavra ("Perto", "Longe"...) enquanto a tag toca.
+// Parada, volta ao rótulo "Distância".
+export function textoDistancia(status) {
+  if (!status || status.tipo === 'parada') return 'Distância';
+  if (status.distancia) return status.distancia.charAt(0).toUpperCase() + status.distancia.slice(1);
+  if (status.tipo === 'procurando') return 'Medindo…';
+  return 'Sem medida';
+}
+
+// Para o leitor de tela, a palavra sozinha perde o contexto: lê "Distância: perto".
+export function rotuloDistancia(status) {
+  if (status && status.tipo !== 'parada' && status.distancia) return `Distância: ${status.distancia}`;
+  return textoDistancia(status);
+}
+
+// Avalia a qualidade do sinal agora, olhando as leituras recentes da sessão.
+function avaliarSinal(s, agora) {
+  const temSinal = s.amostras.length > 0 && agora - s.ultima <= SINAL_VALIDO_MS;
+  if (!temSinal) {
+    if (agora - s.inicio <= AVISO_SEM_SINAL_MS) return { tipo: 'procurando', rssi: null };
+    return { tipo: s.jaTeveSinal ? 'perdido' : 'sem_sinal', rssi: null };
+  }
+  const rssi = s.amostras.reduce((a, b) => a + b, 0) / s.amostras.length;
+  const recentes = s.tempos.filter((x) => agora - x <= JANELA_LEITURAS_MS).length;
+  if (rssi < RSSI_SINAL_FRACO) return { tipo: 'fraca', rssi };
+  if (recentes < LEITURAS_MINIMAS) return { tipo: 'instavel', rssi };
+  return { tipo: 'boa', rssi };
+}
+
 export function useToque() {
   const [tocandoId, setTocandoId] = useState(null);
+  const [status, setStatus] = useState(STATUS_PARADO);
   const sessao = useRef(null);
+  const iniciando = useRef(false); // evita duas sessões se a pessoa tocar duas vezes rápido
 
   const parar = useCallback(() => {
     const s = sessao.current;
     sessao.current = null;
     Vibration.cancel();
     setTocandoId(null);
+    setStatus(STATUS_PARADO);
     if (!s) return;
     s.ativo = false;
     clearTimeout(s.timer);
@@ -327,11 +320,16 @@ export function useToque() {
     clearTimeout(s.limite);
     liberarBeeps();
     clearInterval(s.leitor);
+    clearInterval(s.tick);
+    try { s.sub && s.sub.remove(); } catch (e) { /* já removido */ }
     try { s.ble.stopDeviceScan(); } catch (e) { /* já parado */ }
     s.ble.cancelDeviceConnection(s.deviceId).catch(() => { /* não estava conectado */ });
   }, []);
 
   const iniciar = useCallback(async (tag) => {
+    if (iniciando.current) return;
+    iniciando.current = true;
+    try {
     parar();
     let ble;
     try {
@@ -349,15 +347,23 @@ export function useToque() {
       return;
     }
 
-    const s = { ble, deviceId: tag.deviceId, ativo: true, amostras: [], ultima: 0, timer: null, timerSom: null, limite: null, leitor: null };
+    const s = {
+      ble, deviceId: tag.deviceId, inicio: Date.now(), ativo: true, amostras: [], tempos: [], ultima: 0, jaTeveSinal: false,
+      nivelMostrado: '', nivelCandidato: '', contaNivel: 0, alertou: false,
+      timer: null, timerSom: null, limite: null, leitor: null, tick: null, sub: null,
+    };
     sessao.current = s;
     setTocandoId(tag.id);
 
     // Guarda as últimas 3 leituras para o ritmo não oscilar a cada anúncio.
     const registrar = (rssi) => {
+      const agora = Date.now();
       s.amostras.push(rssi);
       if (s.amostras.length > 3) s.amostras.shift();
-      s.ultima = Date.now();
+      s.ultima = agora;
+      s.jaTeveSinal = true;
+      s.tempos.push(agora);
+      while (s.tempos.length && agora - s.tempos[0] > JANELA_LEITURAS_MS) s.tempos.shift();
     };
 
     // Fonte 1: anúncios do aparelho.
@@ -417,11 +423,48 @@ export function useToque() {
     };
     cicloSom();
     s.limite = setTimeout(parar, TEMPO_MAXIMO_MS);
+
+    // Se o Bluetooth for desligado durante o toque, para e avisa.
+    s.sub = ble.onStateChange((novo) => {
+      if (novo !== 'PoweredOn' && sessao.current === s) {
+        parar();
+        Alert.alert('Tocar', 'O Bluetooth foi desligado. Ligue de novo para tocar a tag.');
+      }
+    }, false);
+
+    // Reavalia a qualidade do sinal e o texto da distância de tempos em tempos.
+    const reavaliar = () => {
+      if (!s.ativo) return;
+      const agora = Date.now();
+      const av = avaliarSinal(s, agora);
+      // O texto da distância só muda depois de 2 leituras seguidas iguais (evita piscar na fronteira).
+      const nivel = av.rssi == null ? '' : descreverProximidade(av.rssi);
+      if (nivel === s.nivelMostrado) {
+        s.contaNivel = 0;
+      } else {
+        if (nivel === s.nivelCandidato) s.contaNivel += 1; else { s.nivelCandidato = nivel; s.contaNivel = 1; }
+        if (nivel === '' || s.contaNivel >= 2) { s.nivelMostrado = nivel; s.contaNivel = 0; }
+      }
+      const rssiInt = av.rssi == null ? null : Math.round(av.rssi);
+      setStatus((ant) => (ant.tipo === av.tipo && ant.distancia === s.nivelMostrado && ant.rssi === rssiInt
+        ? ant
+        : { tipo: av.tipo, rssi: rssiInt, distancia: s.nivelMostrado }));
+      // Nunca achou a tag: um aviso (uma vez só). O toque continua tentando.
+      if (av.tipo === 'sem_sinal' && !s.alertou && agora - s.inicio > ALERTA_SEM_SINAL_MS) {
+        s.alertou = true;
+        Alert.alert('Tocar', 'Não encontrei o sinal da tag. Aproxime-a do celular, confira se está ligada e não está conectada a outro celular.');
+      }
+    };
+    reavaliar();
+    s.tick = setInterval(reavaliar, ATUALIZAR_STATUS_MS);
+    } finally {
+      iniciando.current = false;
+    }
   }, [parar]);
 
   const alternar = useCallback((tag) => {
     if (!tag.deviceId) {
-      Alert.alert('Tocar', 'Esta tag é só um exemplo e não está ligada a nenhum aparelho. Adicione uma tag com o botão +.');
+      Alert.alert('Tocar', 'Esta tag não está ligada a nenhum aparelho. Remova e adicione de novo pelo botão +.');
       return;
     }
     if (sessao.current && sessao.current.deviceId === tag.deviceId) parar();
@@ -431,5 +474,5 @@ export function useToque() {
   // Ao sair da tela, para tudo (vibração, busca e conexão).
   useEffect(() => parar, [parar]);
 
-  return { tocandoId, alternar, parar };
+  return { tocandoId, status, alternar, parar };
 }

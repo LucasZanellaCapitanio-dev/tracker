@@ -7,7 +7,7 @@ import Botao from '../components/Botao';
 import ConfirmarRemocao from './ConfirmarRemocao';
 import DetalhesTag from './DetalhesTag';
 import { cores, raio, fonte } from '../theme';
-import { useToque } from '../bluetooth';
+import { useToque, textoDistancia, rotuloDistancia, textoStatus, statusRuim } from '../bluetooth';
 
 // ===== AJUSTE DO BOTÃO TOCAR (mexa só aqui; salve e recarregue o app) =====
 const TOCAR_ALTURA = 130;         // altura do botão TOCAR, em pixels. Maior número = botão mais alto
@@ -16,16 +16,8 @@ const DETALHES_TAMANHO = 72;      // botão cinza do olho (largura e altura)
 const DETALHES_ESPACO = 12;       // espaço entre o TOCAR e o olho
 // ===========================================================================
 
-// Exemplos só para mostrar a rolagem horizontal (não têm deviceId, então o TOCAR não faz nada nelas).
-// As tags criadas pela tela "Adicionar tag" chegam pela prop `tags` e têm o deviceId do aparelho pareado.
-export const TAGS_EXEMPLO = [
-  { id: '1', nome: 'MALA VIAGEM', icone: 'briefcase-outline' },
-  { id: '2', nome: 'CHAVES', icone: 'key-outline' },
-  { id: '3', nome: 'MOCHILA', icone: 'bag-personal-outline' },
-];
-
 // Sem equipamentos: mostrar "Nenhum equipamento" e botão "Procurar rastreador".
-function Tag({ item, largura, altura, tocando, onTocar, onDetalhes }) {
+function Tag({ item, largura, altura, tocando, status, onTocar, onDetalhes }) {
   const nome = item.nome.toLowerCase();
   return (
     <View style={[s.tag, { width: largura, height: altura }]}>
@@ -36,10 +28,12 @@ function Tag({ item, largura, altura, tocando, onTocar, onDetalhes }) {
         <View style={s.info}>
           {/* uma linha só: se não couber, termina em "..." e o TOCAR não se deforma */}
           <Text style={s.nome} numberOfLines={1} ellipsizeMode="tail">{item.nome}</Text>
-          <Text style={s.suave} numberOfLines={1} ellipsizeMode="tail">Distância · Bateria</Text>
-          <View style={s.status}>
+          <Text style={s.distancia} numberOfLines={2} ellipsizeMode="tail" accessibilityLiveRegion="polite" accessibilityLabel={rotuloDistancia(status)}>
+            {textoDistancia(status)}
+          </Text>
+          <View style={[s.status, statusRuim(status) && s.statusRuim]}>
             <View style={s.ponto} />
-            <Text style={s.statusTexto} numberOfLines={1}>Conectado</Text>
+            <Text style={s.statusTexto} numberOfLines={1} accessibilityLiveRegion="polite">{textoStatus(status)}</Text>
           </View>
         </View>
       </View>
@@ -61,15 +55,21 @@ function Tag({ item, largura, altura, tocando, onTocar, onDetalhes }) {
   );
 }
 
-export default function Inicio({ tags = TAGS_EXEMPLO, onTocar, onRemover, onEditar, onAdicionar, onAssistente }) {
+export default function Inicio({ tags = [], onTocar, onRemover, onEditar, onAdicionar, onAssistente }) {
   // Tamanho real da área da lista: cada página tem exatamente esse tamanho.
   const [medida, setMedida] = useState({ w: 0, h: 0 });
   const [indice, setIndice] = useState(0);
   const [confirmando, setConfirmando] = useState(false);
   const [detalhes, setDetalhes] = useState(false);
-  const { tocandoId, alternar, parar } = useToque();
+  const { tocandoId, status, alternar, parar } = useToque();
   const lista = useRef(null);
   const atual = tags[indice] || tags[0]; // fica undefined quando não há nenhuma tag
+  // Dados ao vivo só existem para a tag que está tocando agora.
+  const statusAtual = atual && tocandoId === atual.id ? status : null;
+  // Nos detalhes, a distância mostra o valor do sinal (RSSI) que o app acabou de medir.
+  const detalheDistancia = !statusAtual
+    ? 'Toque em TOCAR para medir'
+    : statusAtual.rssi != null ? `${statusAtual.rssi} dBm` : 'Sem leitura de sinal';
 
   // Remove a tag atual: para o toque se ela estiver tocando, avisa o App e ajusta a página.
   const remover = () => {
@@ -107,10 +107,10 @@ export default function Inicio({ tags = TAGS_EXEMPLO, onTocar, onRemover, onEdit
               style={{ width: medida.w, height: medida.h }}
               horizontal
               data={tags}
-              extraData={tocandoId}
+              extraData={`${tocandoId}-${status.tipo}-${status.distancia}`}
               keyExtractor={(t) => t.id}
               renderItem={({ item }) => (
-                <Tag item={item} largura={medida.w} altura={medida.h} tocando={tocandoId === item.id} onTocar={() => { onTocar && onTocar(item); alternar(item); }} onDetalhes={() => { setIndice(tags.findIndex((t) => t.id === item.id)); setDetalhes(true); }} />
+                <Tag item={item} largura={medida.w} altura={medida.h} tocando={tocandoId === item.id} status={tocandoId === item.id ? status : null} onTocar={() => { onTocar && onTocar(item); alternar(item); }} onDetalhes={() => { setIndice(tags.findIndex((t) => t.id === item.id)); setDetalhes(true); }} />
               )}
               getItemLayout={(_, i) => ({ length: medida.w, offset: medida.w * i, index: i })}
               showsHorizontalScrollIndicator={false}
@@ -153,7 +153,7 @@ export default function Inicio({ tags = TAGS_EXEMPLO, onTocar, onRemover, onEdit
         </TouchableOpacity>
       </View>
 
-      <DetalhesTag visivel={detalhes} item={atual} onFechar={() => setDetalhes(false)} />
+      <DetalhesTag visivel={detalhes} item={atual ? { ...atual, distancia: detalheDistancia, status: textoStatus(statusAtual) } : atual} onFechar={() => setDetalhes(false)} />
 
       <ConfirmarRemocao
         visivel={confirmando && !!atual}
@@ -181,7 +181,7 @@ const s = StyleSheet.create({
   },
   info: { flex: 1, minWidth: 0, gap: 4 },
   nome: { fontSize: 38, fontWeight: '800', color: cores.texto },
-  suave: { fontSize: 24, fontWeight: '700', color: cores.escuro },
+  distancia: { fontSize: 22, fontWeight: '700', color: cores.escuro },
   status: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
@@ -192,6 +192,7 @@ const s = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 12,
   },
+  statusRuim: { backgroundColor: cores.vermelho },
   ponto: { width: 12, height: 12, borderRadius: 6, backgroundColor: cores.escuro },
   statusTexto: { fontSize: 18, fontWeight: '800', color: cores.texto },
   // a zona ocupa o espaço livre e centraliza o TOCAR (altura fixa em TOCAR_ALTURA)

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Platform, StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Cabecalho, BarraNav } from './src/components/Navegacao';
-import Inicio, { TAGS_EXEMPLO } from './src/screens/TelaInicio';
+import Inicio from './src/screens/TelaInicio';
 import Configuracoes from './src/screens/Configuracoes';
 import Descricao from './src/screens/Descricao';
 import Assistente from './src/screens/Assistente';
@@ -35,7 +35,7 @@ export default function App() {
 function Principal() {
   const [tela, setTela] = useState('inicio');
   const [aparelho, setAparelho] = useState({ id: null, nome: 'aparelho 1' });
-  const [tags, setTags] = useState(TAGS_EXEMPLO);
+  const [tags, setTags] = useState([]) // começa sem nenhuma tag: é preciso adicionar uma pela tela "Adicionar tag";
   const [editando, setEditando] = useState({ nome: '', icone: 'briefcase-outline' });
 
   

@@ -4,14 +4,13 @@ import Botao from '../components/Botao';
 import { cores, raio, fonte } from '../theme';
 
 // Mostra as informações da tag por inteiro (sem "..."), em letras grandes.
-// Quando houver dados reais, é só preencher item.distancia, item.bateria e item.status.
+// A distância (valor do sinal, em dBm) e o status chegam prontos do TelaInicio, ao vivo enquanto a tag toca.
 export default function DetalhesTag({ visivel, item, onFechar }) {
   if (!item) return null;
   const linhas = [
     { rotulo: 'NOME', valor: item.nome },
-    { rotulo: 'DISTÂNCIA', valor: item.distancia ?? 'Ainda não disponível' },
-    { rotulo: 'BATERIA', valor: item.bateria ?? 'Ainda não disponível' },
-    { rotulo: 'STATUS', valor: item.status ?? 'Conectado' },
+    { rotulo: 'DISTÂNCIA', valor: item.distancia ?? 'Toque em TOCAR para medir' },
+    { rotulo: 'STATUS', valor: item.status ?? 'Pronta para tocar' },
   ];
   return (
     <Modal visible={visivel} transparent animationType="fade" onRequestClose={onFechar}>
